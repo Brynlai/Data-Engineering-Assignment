@@ -1,3 +1,5 @@
+from typing import List
+
 class Comment:
    def __init__(self, comment_id: int, user: str, comment_text: str):
      self.comment_id = comment_id
