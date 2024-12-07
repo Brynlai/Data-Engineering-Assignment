@@ -1,0 +1,26 @@
+from pyspark.sql import SparkSession
+
+# Create a Spark session
+spark = SparkSession.builder \
+    .appName("Split Sentences into Words") \
+    .getOrCreate()
+
+# Path to the file in HDFS
+hdfs_path = "hdfs:///user/hdfs/scraped_articles.txt"
+
+# Read the data as an RDD
+data_rdd = spark.sparkContext.textFile(hdfs_path)
+
+# Split sentences into words
+words_rdd = data_rdd.flatMap(lambda sentence: sentence.split())
+
+# Collect and print the result (for demonstration purposes)
+words = words_rdd.collect()
+print(words)
+
+# If you'd like to save the output back to HDFS
+output_path = "hdfs:///user/hdfs/split_words"
+words_rdd.saveAsTextFile(output_path)
+
+# Stop the Spark session
+spark.stop()
