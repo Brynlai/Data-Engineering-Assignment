@@ -1,0 +1,49 @@
+# Function to remove "-CariDotMy" from text and trim spaces
+def remove_cari_dot_my(text):
+    """
+    Removes '-CariDotMy' from the given text and trims leading/trailing spaces.
+    """
+    return text.replace("- CariDotMy", "").strip()
+
+def preprocess_data(data):
+    """
+    Automatically preprocess the scraped data by detecting and removing patterns like unwanted words,
+    symbols (e.g., ':', ',', '-', '_', '.', '"'), and specific sentences.
+    
+    Args:
+        data (str): The raw data as a string.
+        
+    Returns:
+        str: The cleaned data.
+    """
+    # Detect patterns with regular expressions
+    patterns_to_remove = [
+        r"Aid: \d+",           # Matches "Aid: <number>"
+        r"Title:",             # Matches "Title:"
+        r"Content:",           # Matches "Content:"
+        r"[,:\-_.\"]",         # Matches symbols like :, -, _, ., "
+        r'katanyahttp\S+',     # Matches "katanyahttp" followed by any URL-like text
+        r'http\S+',            # Matches any general URL
+    ]
+    
+    # Combine patterns into a single regex
+    combined_pattern = "|".join(patterns_to_remove)
+    
+    # Remove unwanted patterns
+    cleaned_data = re.sub(combined_pattern, "", data)
+    
+    # Remove extra whitespace
+    cleaned_data = re.sub(r"\s+", " ", cleaned_data).strip()
+    
+    return cleaned_data
+
+# Function to save data to HDFS
+def save_to_hdfs(client, data, hdfs_path):
+    """
+    Saves scraped data to HDFS as a JSON-like text.
+    """
+    with client.write(hdfs_path, encoding='utf-8', overwrite=True) as writer:
+        for entry in data:
+            # Apply preprocessing before saving
+            cleaned_entry = preprocess_data(str(entry))
+            writer.write(f"{cleaned_entry}\n")  # Store each ScrapedData entry as a new line
