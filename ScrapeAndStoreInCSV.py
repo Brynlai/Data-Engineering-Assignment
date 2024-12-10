@@ -122,9 +122,9 @@ print("Comments DataFrame:")
 comments_df.show(10, truncate=True)
 
 article_df.write.format("csv").mode("overwrite").option("header", "true").save("assignmentData/article_df.csv")
-article_csv = spark.read.csv('article_df.csv', header=True)
+article_csv = spark.read.csv('assignmentData/article_df.csv', header=True)
 comments_df.write.format("csv").mode("overwrite").option("header", "true").save("assignmentData/comments_df.csv")
-comments_csv = spark.read.csv('comments_df.csv', header=True)
+comments_csv = spark.read.csv('assignmentData/comments_df.csv', header=True)
 
 article_csv.show(5)
 comments_csv.show(5)
