@@ -95,41 +95,6 @@ comments_csv_words.show(5)
 
 
 # Clean individual Words
-
-# # Apply the UDF to fetch definitions for each word
-# article_csv_definitions = article_csv_words.select("Title_Words", "Content_Words") \
-#                                         .withColumn("Word", explode("Content_Words")) \
-#                                         .withColumn("Definition", definition_udf("Word")) \
-#                                         .drop("Content_Words", "Title_Words")
-
-# comments_csv_definitions = comments_csv_words.select("Comment_Text_Words") \
-#                                          .withColumn("Word", explode("Comment_Text_Words")) \
-#                                          .withColumn("Definition", definition_udf("Word")) \
-#                                          .drop("Comment_Text_Words")
-
-# # Display the results
-# article_csv_definitions.show(5)
-# comments_csv_definitions.show(5)
-
-# # Count the rows in each DataFrame
-# article_count = article_csv_definitions.count()
-# comments_count = comments_csv_definitions.count()
-
-# print(f"Article Definitions Count: {article_count}")
-# print(f"Comments Definitions Count: {comments_count}")
-
-# # Combine the DataFrames
-# combined_definitions = article_csv_definitions.union(comments_csv_definitions)
-# combined_count = combined_definitions.count()
-# print(f"Combined Definitions Count: {combined_count}")
-
-# # Save the combined DataFrame to a CSV file
-# combined_definitions.write.option("header", True).csv("assignData/word_definitions_csv")
-
-# word_definitions_csv = spark.read.csv('assignData/word_definitions_csv', header=True)
-# word_definitions_csv.show(5)
-
-
 print("article_csv_words: ")
 article_csv_words.select("Content_Words").show(5)
 print("comments_csv_words: ")
