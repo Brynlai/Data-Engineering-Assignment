@@ -5,11 +5,8 @@ from bs4 import BeautifulSoup
 from typing import List
 
 from Classes import Scraped_Data, Comment
-from Definitions import fetch_definition
 from Scrapes import scrape_comments, scrape_article
-
 !pwd
-
 # PySpark setup
 spark = SparkSession.builder \
     .appName("ScrapedDataProcessor") \
@@ -17,7 +14,7 @@ spark = SparkSession.builder \
 
 # Scraping and data processing
 base_url = "https://b.cari.com.my/portal.php?mod=view&aid="
-aid_values = range(4, 5)  # Adjust range as needed
+aid_values = range(20, 50)  # Adjust range as needed
 
 article_data = []
 comments_data = []
@@ -56,21 +53,24 @@ comments_df = spark.createDataFrame(comments_data, schema=comments_schema)
 
 # Displaying data
 print("Articles DataFrame:")
-article_df.show(10, truncate=True)
+article_df.show(50, truncate=True)
 
 print("Comments DataFrame:")
-comments_df.show(10, truncate=True)
+comments_df.show(50, truncate=True)
 
-article_df.write.format("csv").mode("overwrite").option("header", "true").save("assignData/articles_data_csv")
-article_csv = spark.read.csv('assignData/articles_data_csv', header=True)
-comments_df.write.format("csv").mode("overwrite").option("header", "true").save("assignData/comments_data_csv")
-comments_csv = spark.read.csv('assignData/comments_data_csv', header=True)
+# Writing DataFrames to CSV files with proper handling of quoted fields
+article_df.write.option("header", True) \
+    .option("quoteAll", True) \
+    .option("escape", "\"") \
+    .csv("assignData/articles_data_csv")
 
-article_csv.show(5)
-comments_csv.show(5)
+comments_df.write.option("header", True) \
+    .option("quoteAll", True) \
+    .option("escape", "\"") \
+    .csv("assignData/comments_data_csv")
 
 
-from pyspark.sql.functions import udf, split, col, explode
+from pyspark.sql.functions import udf, split, col, concat, explode
 from Definitions import fetch_definition
 
 definition_udf = udf(fetch_definition, StringType())
@@ -78,69 +78,66 @@ definition_udf = udf(fetch_definition, StringType())
 article_csv = spark.read.csv('assignData/articles_data_csv', header=True)
 comments_csv = spark.read.csv('assignData/comments_data_csv', header=True)
 
-print("article_csv: ")
-article_csv.show(5)
-print("comments_csv: ")
-comments_csv.show(5)
+print("article_csv.count(): ", article_csv.count())
+print("comments_csv.count(): ", comments_csv.count())
 
-# Split the text into words
-article_csv_words = article_csv.withColumn("Title_Words", split(col("Title"), " ")) \
-                         .withColumn("Content_Words", split(col("Content"), " "))
+article_csv.count()
+filtered_article_csv = article_csv.filter((col("views").cast("int").isNotNull()) & (col("views") > 0))
+filtered_article_csv.count()
+
+# Concatenate Title and Content columns and then split into words
+article_csv_words = filtered_article_csv.withColumn("Combined_Text", concat(col("Title"), col("Content"))) \
+                                       .withColumn("Combined_Words", split(col("Combined_Text"), " "))
 
 comments_csv_words = comments_csv.withColumn("Comment_Text_Words", split(col("Comment_Text"), " "))
+
 print("article_csv_words: ")
-article_csv_words.select("Content_Words").show(5)
+article_csv_words.show(5)
 print("comments_csv_words: ")
 comments_csv_words.show(5)
-
 
 # Clean individual Words
 print("article_csv_words: ")
-article_csv_words.select("Content_Words").show(5)
+article_csv_words.select("Combined_Words").show(5)
 print("comments_csv_words: ")
 comments_csv_words.show(5)
 
-from pyspark.sql import Row
 
-# Extract words as an RDD
-article_words_rdd = article_csv_words.select("Content_Words").rdd.flatMap(lambda x: x.Content_Words)
-comment_words_rdd = comments_csv_words.select("Comment_Text_Words").rdd.flatMap(lambda x: x.Comment_Text_Words)
+print("Article Words  Count:", article_csv_words.count())
+print("Article Words  :", article_csv_words.show(50, truncate=True))
+print("Comment Words  Count:", comments_csv_words.count())
+print("Comment Words  :", comments_csv_words.show(50, truncate=True))
+print(type(article_csv_words))
 
-# Combine the RDDs of words
-all_words_rdd = article_words_rdd.union(comment_words_rdd)
-
-# Convert the combined RDD back to a DataFrame
-all_words_df = all_words_rdd.map(lambda x: Row(word=x)).toDF(["word"])
-
+combined_words_df = article_csv_words.select(explode("Combined_Words").alias("Word"))
+# Show the first few rows to verify
 print("Combined Words:")
-all_words_df.show(6)
-all_words_df.count()
+combined_words_df.show(50, truncate=True)
+print("Combined Words Count:", combined_words_df.count())
 
-from pyspark.sql.functions import udf
-from pyspark.sql.types import BooleanType, StringType
-import re
 
-# Step 1: Remove duplicates
-all_words_unique = all_words_df.dropDuplicates()
 
-# Step 2: Remove punctuation from words
+# Define a UDF to convert words to lowercase and remove non-alphabetic characters
 def clean_word(word):
-    return re.sub(r'[^a-zA-Z]', '', word)
+    return ''.join(char for char in word.lower() if char.isalpha())
 
+# Register the UDF
 clean_word_udf = udf(clean_word, StringType())
-cleaned_words_with_punctuation_removed = all_words_unique.withColumn("word", clean_word_udf("word"))
 
-# Step 3: Filter out non-alphabetic characters (now that punctuation is removed)
-def is_alphabetic(word):
-    return word.isalpha()
+# Apply the UDF to the 'Word' column
+cleaned_combined_words_df = combined_words_df.withColumn("Cleaned_Word", clean_word_udf("Word"))
 
-is_alphabetic_udf = udf(is_alphabetic, BooleanType())
-cleaned_words = cleaned_words_with_punctuation_removed.filter(is_alphabetic_udf("word"))
+# Remove duplicates based on 'Cleaned_Word'
+distinct_cleaned_words_df = cleaned_combined_words_df.select("Cleaned_Word").distinct()
 
-# Show the cleaned DataFrame
-print("Cleaned Words:")
-cleaned_words.show(20)
-cleaned_words.count()
+# Show the first few rows to verify
+print("Distinct Cleaned Combined Words:")
+distinct_cleaned_words_df.show(50, truncate=True)
+print("Distinct Cleaned Combined Words Count:", distinct_cleaned_words_df.count())
 
-cleaned_words.write.format("csv").mode("overwrite").option("header", "true").save("assignData/all_words_cleaned_csv")
-all_words_cleaned_csv = spark.read.csv('assignData/all_words_cleaned_csv', header=True)
+
+distinct_cleaned_words_df.write.option("header", True) \
+    .option("quoteAll", True) \
+    .option("escape", "\"") \
+    .csv("assignData/clean_words_data_csv")
+
