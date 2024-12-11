@@ -69,7 +69,7 @@ comments_csv = spark.read.csv('assignData/comments_data_csv', header=True)
 article_csv.show(5)
 comments_csv.show(5)
 
-# Definition part:
+
 from pyspark.sql.functions import udf, split, col, explode
 from Definitions import fetch_definition
 
@@ -92,6 +92,7 @@ print("article_csv_words: ")
 article_csv_words.select("Content_Words").show(5)
 print("comments_csv_words: ")
 comments_csv_words.show(5)
+
 
 # Clean individual Words
 
@@ -128,3 +129,53 @@ comments_csv_words.show(5)
 # word_definitions_csv = spark.read.csv('assignData/word_definitions_csv', header=True)
 # word_definitions_csv.show(5)
 
+
+print("article_csv_words: ")
+article_csv_words.select("Content_Words").show(5)
+print("comments_csv_words: ")
+comments_csv_words.show(5)
+
+from pyspark.sql import Row
+
+# Extract words as an RDD
+article_words_rdd = article_csv_words.select("Content_Words").rdd.flatMap(lambda x: x.Content_Words)
+comment_words_rdd = comments_csv_words.select("Comment_Text_Words").rdd.flatMap(lambda x: x.Comment_Text_Words)
+
+# Combine the RDDs of words
+all_words_rdd = article_words_rdd.union(comment_words_rdd)
+
+# Convert the combined RDD back to a DataFrame
+all_words_df = all_words_rdd.map(lambda x: Row(word=x)).toDF(["word"])
+
+print("Combined Words:")
+all_words_df.show(6)
+all_words_df.count()
+
+from pyspark.sql.functions import udf
+from pyspark.sql.types import BooleanType, StringType
+import re
+
+# Step 1: Remove duplicates
+all_words_unique = all_words_df.dropDuplicates()
+
+# Step 2: Remove punctuation from words
+def clean_word(word):
+    return re.sub(r'[^a-zA-Z]', '', word)
+
+clean_word_udf = udf(clean_word, StringType())
+cleaned_words_with_punctuation_removed = all_words_unique.withColumn("word", clean_word_udf("word"))
+
+# Step 3: Filter out non-alphabetic characters (now that punctuation is removed)
+def is_alphabetic(word):
+    return word.isalpha()
+
+is_alphabetic_udf = udf(is_alphabetic, BooleanType())
+cleaned_words = cleaned_words_with_punctuation_removed.filter(is_alphabetic_udf("word"))
+
+# Show the cleaned DataFrame
+print("Cleaned Words:")
+cleaned_words.show(20)
+cleaned_words.count()
+
+cleaned_words.write.format("csv").mode("overwrite").option("header", "true").save("assignData/all_words_cleaned_csv")
+all_words_cleaned_csv = spark.read.csv('assignData/all_words_cleaned_csv', header=True)
