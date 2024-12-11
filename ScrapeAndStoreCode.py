@@ -7,6 +7,9 @@ from typing import List
 from Classes import Scraped_Data, Comment
 from Definitions import fetch_definition
 from Scrapes import scrape_comments, scrape_article
+
+!pwd
+
 # PySpark setup
 spark = SparkSession.builder \
     .appName("ScrapedDataProcessor") \
@@ -14,7 +17,7 @@ spark = SparkSession.builder \
 
 # Scraping and data processing
 base_url = "https://b.cari.com.my/portal.php?mod=view&aid="
-aid_values = range(1, 501)  # Adjust range as needed
+aid_values = range(1, 4)  # Adjust range as needed
 
 article_data = []
 comments_data = []
@@ -58,10 +61,10 @@ article_df.show(10, truncate=True)
 print("Comments DataFrame:")
 comments_df.show(10, truncate=True)
 
-article_df.write.format("csv").mode("overwrite").option("header", "true").save("assignmentData/article_df.csv")
-article_csv = spark.read.csv('assignmentData/article_df.csv', header=True)
-comments_df.write.format("csv").mode("overwrite").option("header", "true").save("assignmentData/comments_df.csv")
-comments_csv = spark.read.csv('assignmentData/comments_df.csv', header=True)
+article_df.write.format("csv").mode("overwrite").option("header", "true").save("assignData/articles_data_csv")
+article_csv = spark.read.csv('assignData/articles_data_csv', header=True)
+comments_df.write.format("csv").mode("overwrite").option("header", "true").save("assignData/comments_data_csv")
+comments_csv = spark.read.csv('assignData/comments_data_csv', header=True)
 
 article_csv.show(5)
 comments_csv.show(5)
