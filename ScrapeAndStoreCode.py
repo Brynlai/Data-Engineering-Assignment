@@ -17,7 +17,7 @@ spark = SparkSession.builder \
 
 # Scraping and data processing
 base_url = "https://b.cari.com.my/portal.php?mod=view&aid="
-aid_values = range(1, 4)  # Adjust range as needed
+aid_values = range(4, 5)  # Adjust range as needed
 
 article_data = []
 comments_data = []
@@ -68,3 +68,63 @@ comments_csv = spark.read.csv('assignData/comments_data_csv', header=True)
 
 article_csv.show(5)
 comments_csv.show(5)
+
+# Definition part:
+from pyspark.sql.functions import udf, split, col, explode
+from Definitions import fetch_definition
+
+definition_udf = udf(fetch_definition, StringType())
+
+article_csv = spark.read.csv('assignData/articles_data_csv', header=True)
+comments_csv = spark.read.csv('assignData/comments_data_csv', header=True)
+
+print("article_csv: ")
+article_csv.show(5)
+print("comments_csv: ")
+comments_csv.show(5)
+
+# Split the text into words
+article_csv_words = article_csv.withColumn("Title_Words", split(col("Title"), " ")) \
+                         .withColumn("Content_Words", split(col("Content"), " "))
+
+comments_csv_words = comments_csv.withColumn("Comment_Text_Words", split(col("Comment_Text"), " "))
+print("article_csv_words: ")
+article_csv_words.select("Content_Words").show(5)
+print("comments_csv_words: ")
+comments_csv_words.show(5)
+
+# Clean individual Words
+
+# # Apply the UDF to fetch definitions for each word
+# article_csv_definitions = article_csv_words.select("Title_Words", "Content_Words") \
+#                                         .withColumn("Word", explode("Content_Words")) \
+#                                         .withColumn("Definition", definition_udf("Word")) \
+#                                         .drop("Content_Words", "Title_Words")
+
+# comments_csv_definitions = comments_csv_words.select("Comment_Text_Words") \
+#                                          .withColumn("Word", explode("Comment_Text_Words")) \
+#                                          .withColumn("Definition", definition_udf("Word")) \
+#                                          .drop("Comment_Text_Words")
+
+# # Display the results
+# article_csv_definitions.show(5)
+# comments_csv_definitions.show(5)
+
+# # Count the rows in each DataFrame
+# article_count = article_csv_definitions.count()
+# comments_count = comments_csv_definitions.count()
+
+# print(f"Article Definitions Count: {article_count}")
+# print(f"Comments Definitions Count: {comments_count}")
+
+# # Combine the DataFrames
+# combined_definitions = article_csv_definitions.union(comments_csv_definitions)
+# combined_count = combined_definitions.count()
+# print(f"Combined Definitions Count: {combined_count}")
+
+# # Save the combined DataFrame to a CSV file
+# combined_definitions.write.option("header", True).csv("assignData/word_definitions_csv")
+
+# word_definitions_csv = spark.read.csv('assignData/word_definitions_csv', header=True)
+# word_definitions_csv.show(5)
+
