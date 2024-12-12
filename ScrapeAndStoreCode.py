@@ -12,7 +12,7 @@ spark = SparkSession.builder \
 
 # Base URL and AID range
 base_url = "https://b.cari.com.my/portal.php?mod=view&aid="
-aid_values = list(range(1, 1000))  # Adjust range as needed
+aid_values = list(range(1, 10))  # Adjust range as needed
 
 # UDF to scrape article and comments
 def scrape_data_udf(aid: int) -> Optional[tuple]:
@@ -83,7 +83,8 @@ comments_df.write.option("header", True) \
     .csv("assignData/comments_data_csv")
 
 
-from pyspark.sql.functions import udf, split, col, concat, explode
+
+from pyspark.sql.functions import udf, split, col, concat, regexp_replace
 
 article_csv = spark.read.csv('assignData/articles_data_csv', header=True)
 comments_csv = spark.read.csv('assignData/comments_data_csv', header=True)
@@ -95,11 +96,14 @@ article_csv.count()
 filtered_article_csv = article_csv.filter((col("views").cast("int").isNotNull()) & (col("views") > 0))
 filtered_article_csv.count()
 
-# Concatenate Title and Content columns and then split into words
+# Concatenate Title and Content columns and replace commas with spaces
 article_csv_words = filtered_article_csv.withColumn("Combined_Text", concat(col("Title"), col("Content"))) \
+                                       .withColumn("Combined_Text", regexp_replace(col("Combined_Text"), ", ", " ")) \
                                        .withColumn("Combined_Words", split(col("Combined_Text"), " "))
 
-comments_csv_words = comments_csv.withColumn("Comment_Text_Words", split(col("Comment_Text"), " "))
+# Split Comment Text into words by replacing commas with spaces
+comments_csv_words = comments_csv.withColumn("Comment_Text", regexp_replace(col("Comment_Text"), ", ", " ")) \
+                                 .withColumn("Comment_Text_Words", split(col("Comment_Text"), " "))
 
 print("article_csv_words: ")
 article_csv_words.show(5)
@@ -111,6 +115,11 @@ print("article_csv_words: ")
 article_csv_words.select("Combined_Words").show(5)
 print("comments_csv_words: ")
 comments_csv_words.show(5)
+
+
+
+
+
 
 
 print("Article Words  Count:", article_csv_words.count())
@@ -128,28 +137,43 @@ print("Combined Words Count:", combined_words_df.count())
 
 
 
+
+
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import split, explode, udf
+from pyspark.sql.types import StringType
+
 # Define a UDF to convert words to lowercase and remove non-alphabetic characters
 def clean_word(word):
     return ''.join(char for char in word.lower() if char.isalpha())
 
 # Register the UDF
-clean_word_udf = udf(clean_word, StringType())
+spark_session = SparkSession.builder.getOrCreate()
+clean_word_udf = spark_session.udf.register("clean_word", clean_word, StringType())
+
+# Split the 'Word' column into an array
+split_words_df = combined_words_df.withColumn("Split_Words", split(combined_words_df["Word"], ","))
+
+# Explode the array into separate rows
+exploded_words_df = split_words_df.select(explode(split_words_df["Split_Words"]).alias("Word"))
 
 # Apply the UDF to the 'Word' column
-cleaned_combined_words_df = combined_words_df.withColumn("Cleaned_Word", clean_word_udf("Word"))
+cleaned_words_df = exploded_words_df.withColumn("Cleaned_Word", clean_word_udf("Word"))
+
+# Filter out rows where 'Cleaned_Word' is empty
+filtered_cleaned_words_df = cleaned_words_df.filter(cleaned_words_df.Cleaned_Word != '')
 
 # Remove duplicates based on 'Cleaned_Word'
-distinct_cleaned_words_df = cleaned_combined_words_df.select("Cleaned_Word").distinct()
+distinct_cleaned_words_df = filtered_cleaned_words_df.select("Cleaned_Word").distinct()
 
 # Show the first few rows to verify
 print("Distinct Cleaned Combined Words:")
 distinct_cleaned_words_df.show(50, truncate=True)
 print("Distinct Cleaned Combined Words Count:", distinct_cleaned_words_df.count())
 
-
+# Write the DataFrame to CSV
 distinct_cleaned_words_df.write.option("header", True) \
     .option("quoteAll", True) \
     .option("escape", "\"") \
     .csv("assignData/clean_words_data_csv")
-
 
