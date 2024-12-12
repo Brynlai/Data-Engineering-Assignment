@@ -1,55 +1,68 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType
-import requests
-from bs4 import BeautifulSoup
-from typing import List
-
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType, ArrayType
+from pyspark.sql.functions import udf
+from typing import List, Optional
 from Classes import Scraped_Data, Comment
-from Scrapes import scrape_comments, scrape_article
-!pwd
+from Scrapes import scrape_article
+
 # PySpark setup
 spark = SparkSession.builder \
     .appName("ScrapedDataProcessor") \
     .getOrCreate()
 
-# Scraping and data processing
+# Base URL and AID range
 base_url = "https://b.cari.com.my/portal.php?mod=view&aid="
-aid_values = range(20, 50)  # Adjust range as needed
+aid_values = list(range(1, 1000))  # Adjust range as needed
 
-article_data = []
-comments_data = []
-
-for aid in aid_values:
+# UDF to scrape article and comments
+def scrape_data_udf(aid: int) -> Optional[tuple]:
     url = f"{base_url}{aid}"
-    print(f"Scraping AID: {aid}")
-    scraped_data = scrape_article(url, aid)
-    if scraped_data:
-        article = scraped_data[:-1]  # Exclude comments
-        comments = scraped_data[-1]  # Extract comments
-        article_data.append(article)
-        comments_data.extend(comments)
+    try:
+        print(f"Scraping AID: {aid}")
+        scraped_data = scrape_article(url, aid)
+        if scraped_data:
+            article = scraped_data[:-1]  # Exclude comments
+            comments = scraped_data[-1]  # Extract comments
+            return article, comments
+        return None
+    except Exception as e:
+        print(f"Error scraping AID {aid}: {e}")
+        return None
 
-# Defining schemas
-article_schema = StructType([
-    StructField("AID", IntegerType(), True),
-    StructField("Title", StringType(), True),
-    StructField("Date", StringType(), True),
-    StructField("Publisher", StringType(), True),
-    StructField("Views", IntegerType(), True),
-    StructField("Comments_Count", IntegerType(), True),
-    StructField("Content", StringType(), True),
-])
+# Registering UDF
+scrape_data = udf(scrape_data_udf, StructType([
+    StructField("Article", StructType([
+        StructField("AID", IntegerType(), True),
+        StructField("Title", StringType(), True),
+        StructField("Date", StringType(), True),
+        StructField("Publisher", StringType(), True),
+        StructField("Views", IntegerType(), True),
+        StructField("Comments_Count", IntegerType(), True),
+        StructField("Content", StringType(), True),
+    ]), True),
+    StructField("Comments", ArrayType(StructType([
+        StructField("AID", IntegerType(), True),
+        StructField("Comment_ID", IntegerType(), True),
+        StructField("User", StringType(), True),
+        StructField("Comment_Text", StringType(), True),
+    ])), True)
+]))
 
-comments_schema = StructType([
-    StructField("AID", IntegerType(), True),
-    StructField("Comment_ID", IntegerType(), True),
-    StructField("User", StringType(), True),
-    StructField("Comment_Text", StringType(), True),
-])
+# Creating an AID DataFrame for parallel processing
+aid_df = spark.createDataFrame([(aid,) for aid in aid_values], ["AID"])
 
-# Creating DataFrames
-article_df = spark.createDataFrame(article_data, schema=article_schema)
-comments_df = spark.createDataFrame(comments_data, schema=comments_schema)
+# Applying the UDF to scrape data
+scraped_df = aid_df.withColumn("ScrapedData", scrape_data("AID"))
+
+# Extracting articles and comments
+article_df = scraped_df.selectExpr("ScrapedData.Article AS Article").select(
+    "Article.*"
+)
+comments_df = scraped_df.selectExpr("ScrapedData.Comments AS Comments").selectExpr(
+    "explode(Comments) AS Comment"
+).select(
+    "Comment.*"
+)
 
 # Displaying data
 print("Articles DataFrame:")
@@ -71,9 +84,6 @@ comments_df.write.option("header", True) \
 
 
 from pyspark.sql.functions import udf, split, col, concat, explode
-from Definitions import fetch_definition
-
-definition_udf = udf(fetch_definition, StringType())
 
 article_csv = spark.read.csv('assignData/articles_data_csv', header=True)
 comments_csv = spark.read.csv('assignData/comments_data_csv', header=True)
@@ -117,6 +127,7 @@ print("Combined Words Count:", combined_words_df.count())
 
 
 
+
 # Define a UDF to convert words to lowercase and remove non-alphabetic characters
 def clean_word(word):
     return ''.join(char for char in word.lower() if char.isalpha())
@@ -140,4 +151,5 @@ distinct_cleaned_words_df.write.option("header", True) \
     .option("quoteAll", True) \
     .option("escape", "\"") \
     .csv("assignData/clean_words_data_csv")
+
 
