@@ -1,6 +1,6 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, ArrayType
-from pyspark.sql.functions import udf
+from pyspark.sql.functions import udf,explode
 from typing import List, Optional
 from Classes import Scraped_Data, Comment
 from Scrapes import scrape_article
