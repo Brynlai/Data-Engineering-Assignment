@@ -38,7 +38,7 @@ chat_session = model.start_chat(
 
 def get_word_details(words):
     print("Start get_word_details")
-    prompt = f"""Generate a CSV file with the following structure: "word,definition,antonym,synonym,tatabahasa,sentiment". Definition must be explanation and cannot be the same as word. Tatabahasa can only be 2 words. All the rows and columns should be in string format enclosed with "". Sentiment should be values -1 to 1 enclosed with ""..
+    prompt = f"""Generate a CSV file with the following structure: "word,definition,antonym,synonym,tatabahasa,sentiment". Definition must be explanation and cannot be the same as word. Tatabahasa can only be 2 words. All the rows and columns should be in string format enclosed with "". Sentiment should be values -1.0 to 1.0 enclosed with ""..
     
     For each word, provide a definition, an antonym, and a synonym, all in Malay. Ensure the CSV output uses double quotes around each string value. Do not include any introductory or explanatory text outside of the CSV data.
     Words to process: {', '.join(words)}
