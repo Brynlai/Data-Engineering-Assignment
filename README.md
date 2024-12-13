@@ -1,5 +1,7 @@
 $ source de-prj/de-venv/bin/activate
 
+To set an env variable in a jupyter notebook, just use a % magic commands, either %env or %set_env, e.g., %env MY_VAR=MY_VALUE or %env MY_VAR MY_VALUE. (Use %env by itself to print out current environmental variables.)
+
 
 ### **1. Data Collection and Raw Storage**  
 - **What to Store**: Raw scraped text data.  
