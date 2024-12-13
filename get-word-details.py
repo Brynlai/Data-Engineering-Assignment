@@ -1,5 +1,8 @@
 !pip install google.generativeai
 
+%env AIAPI=AIabcs....KEY
+GEMINIAPI = %env AIAPI
+print(GEMINIAPI)
 
 import google.generativeai as genai
 from pyspark.sql import SparkSession
@@ -12,7 +15,7 @@ spark = SparkSession.builder \
     .appName("ScrapedDataProcessor") \
     .getOrCreate()
 
-genai.configure(api_key="API key from https://aistudio.google.com/prompts/new_chat") # Replace with your actual API key
+genai.configure(api_key=GEMINIAPI) # Replace with your actual API key
 
 # Create the model
 generation_config = {
