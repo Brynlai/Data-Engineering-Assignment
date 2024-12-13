@@ -1,3 +1,6 @@
+$ source de-prj/de-venv/bin/activate
+
+
 ### **1. Data Collection and Raw Storage**  
 - **What to Store**: Raw scraped text data.  
 - **Where to Store**: Hadoop HDFS for scalable storage.  
