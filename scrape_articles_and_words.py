@@ -4,6 +4,7 @@ from pyspark.sql.functions import udf,explode
 from typing import List, Optional
 from Classes import Scraped_Data, Comment
 from Scrapes import scrape_article
+import redis
 
 # PySpark setup
 spark = SparkSession.builder \
@@ -162,6 +163,15 @@ cleaned_words_df = exploded_words_df.withColumn("Cleaned_Word", clean_word_udf("
 
 # Filter out rows where 'Cleaned_Word' is empty
 filtered_cleaned_words_df = cleaned_words_df.filter(cleaned_words_df.Cleaned_Word != '')
+
+#REDIS
+redis_client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
+
+from Redis_frequency import save_word_frequencies_to_redis
+# Count the frequency of each word before removing duplicates
+word_frequencies_df = filtered_cleaned_words_df.groupBy("Cleaned_Word").count().withColumnRenamed("count", "Frequency")
+
+save_word_frequencies_to_redis(redis_client, word_frequencies_df)
 
 # Remove duplicates based on 'Cleaned_Word'
 distinct_cleaned_words_df = filtered_cleaned_words_df.select("Cleaned_Word").distinct()
