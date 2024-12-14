@@ -15,96 +15,153 @@ spark = SparkSession.builder \
     .appName("ScrapedDataProcessor") \
     .getOrCreate()
 
-genai.configure(api_key=GEMINIAPI) # Replace with your actual API key
-
-# Create the model
-generation_config = {
-    "temperature": 1,
-    "top_p": 0.95,
-    "top_k": 40,
-    "max_output_tokens": 8192,
-    "response_mime_type": "text/plain",
-}
-
-model = genai.GenerativeModel(
-    model_name="gemini-1.5-flash-8b",
-    generation_config=generation_config,
-)
-
-chat_session = model.start_chat(
-    history=[
-    ]
-)
-
 def get_word_details(words):
-    print("Start get_word_details")
-    prompt = f"""Generate a CSV file with the following structure: "word,definition,antonym,synonym,tatabahasa,sentiment". Definition must be explanation and cannot be the same as word. Tatabahasa can only be 2 words. All the rows and columns should be in string format enclosed with "". Sentiment should be values -1.0 to 1.0 enclosed with ""..
-    
-    For each word, provide a definition, an antonym, and a synonym, all in Malay. Ensure the CSV output uses double quotes around each string value. Do not include any introductory or explanatory text outside of the CSV data.
-    Words to process: {', '.join(words)}
     """
+    Generate word details in CSV format for the given list of words.
+
+    Args:
+        words (list of str): List of words to process.
+
+    Returns:
+        str: CSV content as a string.
+    """
+    print("Start get_word_details")
+    genai.configure(api_key=GEMINIAPI) # Replace with your actual API key
+
+    # Create the model
+    generation_config = {
+        "temperature": 0.7,
+        "top_p": 0.9,
+        "top_k": 20,
+        "max_output_tokens": 8192,  # Double the current limit if supported by the API
+        "response_mime_type": "text/plain",
+    }
+    
+    model = genai.GenerativeModel(
+        model_name="gemini-1.5-flash-8b",
+        generation_config=generation_config,
+    )
+
+    chat_session = model.start_chat(
+      history=[
+      ]
+    )
+    
+    # Improved prompt
+    prompt = f"""You are a Labeling Machine. Generate in text a CSV file with the structure: "word,definition,antonym,synonym,tatabahasa,sentiment". 
+    Rules:
+    1. Definition must explain the word in Malay and not repeat the word.
+    2. Antonyms and synonyms must be meaningful; use "tidak diketahui" if unavailable.
+    3. Tatabahasa must be two Malay words like "kata nama".
+    4. Sentiment is a string between "-1.0" and "1.0", neutral being "0.0".
+    5. Enclose all values in double quotes.
+    Example:
+    "word","definition","antonym","synonym","tatabahasa","sentiment"
+    "kami","kata ganti nama diri jamak, merujuk kepada penutur","mereka","kita","kata ganti","0.0"
+    "gawgwah","tidak diketahui","tidak diketahui","tidak diketahui","tidak diketahui","0.0"
+    
+    Based on these Words, DO NOT SKIP ANY WORDS and generate the csv file: {', '.join(words)}
+    """
+
+    
+    # Sending the prompt to the chat model
     response = chat_session.send_message(prompt)
     
-    # Extract the text content
+    # Extract the text content from the response
     text_response = response.text
-
-    # remove "```" and ""word","definition","antonym","synonym","tatabahasa","sentiment"\n"
-     # remove "```" and ""word","definition","antonym","synonym","tatabahasa","sentiment"\n"
-    text_response = text_response.replace("```", "").replace('"word","definition","antonym","synonym","tatabahasa","sentiment"\n', '')
-    print("get_word_details completed. Returned:", text_response)
+    
+    # Clean up the output to remove any unnecessary characters or formatting
+    text_response = (
+        text_response
+        .replace("```", "")
+        .replace('"word","definition","antonym","synonym","tatabahasa","sentiment"\n', '')
+    )
+    
+    print("get_word_details completed. Returned:")
+    print(text_response)
     print("Ended get_word_details")
+    
     return text_response
 
 
 
-get_word_details(["kami"])
+get_word_details(["whavig2yv2r"])
 
 
-if __name__ == '__main__':
-    # Read input data
-    clean_words_df = spark.read.csv("assignData/clean_words_data_csv", header=True)
-    print("clean_words_df.count():", clean_words_df.count())
 
-    batch_size = 100
-    all_csv_data = []
-    print("1. for i in range(0, clean_words_df.count(), batch_size):")
-    # Process words in batches
-    for i in range(0, clean_words_df.count(), batch_size):
-        batch_words = clean_words_df.select("Cleaned_Word").rdd.map(lambda row: row[0]).take(batch_size)
-        batch_csv_data = get_word_details(batch_words)
-        
-        # Split response into lines and remove the header if present
-        batch_rows = batch_csv_data.strip().split("\n")
-        if batch_rows[0].startswith('"word"'):
-            batch_rows = batch_rows[1:]
+# Read input data
+clean_words_df = spark.read.csv("assignData/clean_words_data_csv", header=True)
+print("clean_words_df.count():", clean_words_df.count())
 
-        all_csv_data.extend(batch_rows)
+from pyspark.sql.window import Window
+from pyspark.sql.functions import row_number
 
-    # Parse rows into structured data
-    parsed_data = [row.split(',') for row in all_csv_data if len(row.split(',')) == 6]
+# Add a unique row number to the DataFrame
+window = Window.orderBy("Cleaned_Word")  # Adjust orderBy as needed
+clean_words_df = clean_words_df.withColumn("row_number", row_number().over(window))
 
-    # Define schema
-    schema = StructType([
-        StructField("word", StringType(), True),
-        StructField("definition", StringType(), True),
-        StructField("antonym", StringType(), True),
-        StructField("synonym", StringType(), True),
-        StructField("tatabahasa", StringType(), True),
-        StructField("sentiment", StringType(), True),
-    ])
+# Batch processing
+batch_size = 50
+total_rows = clean_words_df.count()
+all_csv_data = []
 
-    # Create DataFrame
-    all_csv_data_df = spark.createDataFrame(parsed_data, schema=schema)
+for i in range(0, total_rows, batch_size):
+    # Select a specific batch of rows
+    batch_df = clean_words_df.filter((col("row_number") > i) & (col("row_number") <= i + batch_size))
+    batch_words = batch_df.select("Cleaned_Word").rdd.map(lambda row: row[0]).collect()
+    
+    # Call the get_word_details function with the batch
+    batch_csv_data = get_word_details(batch_words)
+    
+    # Process the response
+    batch_rows = batch_csv_data.strip().split("\n")
+    if batch_rows[0].startswith('"word"'):
+        batch_rows = batch_rows[1:]
+    
+    all_csv_data.extend(batch_rows)
 
-    # Save to CSV
-    output_path = "assignData/word_details_csv"
-    all_csv_data_df.write.option("header", True) \
-                         .option("quoteAll", True) \
-                         .option("escape", "\"") \
-                         .mode("overwrite") \
-                         .csv(output_path)
+# Parse rows into structured data
+parsed_data = [row.split(',') for row in all_csv_data if len(row.split(',')) == 6]
 
-    print(f"Data written to {output_path}")
+# Define schema
+schema = StructType([
+    StructField("word", StringType(), True),
+    StructField("definition", StringType(), True),
+    StructField("antonym", StringType(), True),
+    StructField("synonym", StringType(), True),
+    StructField("tatabahasa", StringType(), True),
+    StructField("sentiment", StringType(), True),
+])
 
+# Create DataFrame
+all_csv_data_df = spark.createDataFrame(parsed_data, schema=schema)
+
+# Save to CSV
+output_path = "assignData/word_details_csv"
+all_csv_data_df.write.option("header", True) \
+                     .mode("overwrite") \
+                     .csv(output_path)
+
+print(f"Data written to {output_path}")
+print(f"Number of usable word scsv_data_df : {csv_data_df.count()}")
+
+
+from pyspark.sql.functions import udf, col
+from pyspark.sql.types import BooleanType
 word_details_csv = spark.read.csv("assignData/word_details_csv", header=True)
-word_details_csv.show(20)
+# Define UDF to filter out unusable words
+def is_usable(definition):
+    return "tidak diketahui" not in definition.lower() or "nama" not in definition.lower()
+
+is_usable_udf = udf(is_usable, BooleanType())
+
+# Filter usable words
+cleaned_data = word_details_csv.filter(is_usable_udf(col("definition")))
+
+# Save the cleaned data to a new CSV
+cleaned_data.write.csv("assignData/word_details_csv_cleaned", header=True, mode="overwrite")
+
+print(f"Number of usable words: {cleaned_data.count()}")
+
+word_details_csv_cleaned = spark.read.csv("assignData/word_details_csv_cleaned", header=True)
+print(f"Output of word_details_csv_cleaned.show(20): {word_details_csv_cleaned.show(20)}")
