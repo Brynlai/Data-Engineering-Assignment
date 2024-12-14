@@ -1,9 +1,11 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, ArrayType
-from pyspark.sql.functions import udf,explode
+from pyspark.sql.functions import udf, split, col, concat, regexp_replace, explode
+
 from typing import List, Optional
 from Classes import Scraped_Data, Comment
 from Scrapes import scrape_article
+import redis
 
 # PySpark setup
 spark = SparkSession.builder \
@@ -12,7 +14,7 @@ spark = SparkSession.builder \
 
 # Base URL and AID range
 base_url = "https://b.cari.com.my/portal.php?mod=view&aid="
-aid_values = list(range(1, 10))  # Adjust range as needed
+aid_values = list(range(1, 50))  # Adjust range as needed
 
 # UDF to scrape article and comments
 def scrape_data_udf(aid: int) -> Optional[tuple]:
@@ -83,9 +85,6 @@ comments_df.write.option("header", True) \
     .csv("assignData/comments_data_csv")
 
 
-
-from pyspark.sql.functions import udf, split, col, concat, regexp_replace
-
 article_csv = spark.read.csv('assignData/articles_data_csv', header=True)
 comments_csv = spark.read.csv('assignData/comments_data_csv', header=True)
 
@@ -116,12 +115,6 @@ article_csv_words.select("Combined_Words").show(5)
 print("comments_csv_words: ")
 comments_csv_words.show(5)
 
-
-
-
-
-
-
 print("Article Words  Count:", article_csv_words.count())
 print("Article Words  :", article_csv_words.show(50, truncate=True))
 print("Comment Words  Count:", comments_csv_words.count())
@@ -133,10 +126,6 @@ combined_words_df = article_csv_words.select(explode("Combined_Words").alias("Wo
 print("Combined Words:")
 combined_words_df.show(50, truncate=True)
 print("Combined Words Count:", combined_words_df.count())
-
-
-
-
 
 
 from pyspark.sql import SparkSession
@@ -152,7 +141,7 @@ spark_session = SparkSession.builder.getOrCreate()
 clean_word_udf = spark_session.udf.register("clean_word", clean_word, StringType())
 
 # Split the 'Word' column into an array
-split_words_df = combined_words_df.withColumn("Split_Words", split(combined_words_df["Word"], ","))
+split_words_df = combined_words_df.withColumn("Split_Words", split(combined_words_df["Word"], "[,;]"))
 
 # Explode the array into separate rows
 exploded_words_df = split_words_df.select(explode(split_words_df["Split_Words"]).alias("Word"))
@@ -162,6 +151,15 @@ cleaned_words_df = exploded_words_df.withColumn("Cleaned_Word", clean_word_udf("
 
 # Filter out rows where 'Cleaned_Word' is empty
 filtered_cleaned_words_df = cleaned_words_df.filter(cleaned_words_df.Cleaned_Word != '')
+
+#REDIS
+redis_client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
+
+from Redis_frequency import save_word_frequencies_to_redis
+# Count the frequency of each word before removing duplicates
+word_frequencies_df = filtered_cleaned_words_df.groupBy("Cleaned_Word").count().withColumnRenamed("count", "Frequency")
+
+save_word_frequencies_to_redis(redis_client, word_frequencies_df)
 
 # Remove duplicates based on 'Cleaned_Word'
 distinct_cleaned_words_df = filtered_cleaned_words_df.select("Cleaned_Word").distinct()
@@ -173,7 +171,7 @@ print("Distinct Cleaned Combined Words Count:", distinct_cleaned_words_df.count(
 
 # Write the DataFrame to CSV
 distinct_cleaned_words_df.write.option("header", True) \
+    .mode("overwrite") \
     .option("quoteAll", True) \
     .option("escape", "\"") \
     .csv("assignData/clean_words_data_csv")
-
