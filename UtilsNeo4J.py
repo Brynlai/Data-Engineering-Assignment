@@ -7,10 +7,6 @@ def setup_neo4j_driver(uri, user, password):
     driver.verify_connectivity()
     return driver
 
-def setup_redis_client(host, port):
-    """Set up a Redis client connection."""
-    return redis.StrictRedis(host=host, port=port, decode_responses=True)
-
 def insert_into_neo4j(tx, word, definition, tatabahasa, synonym, antonym):
     """Insert word data into Neo4j with relationships."""
     tx.run(
@@ -19,6 +15,7 @@ def insert_into_neo4j(tx, word, definition, tatabahasa, synonym, antonym):
         word=word, definition=definition, tatabahasa=tatabahasa
     )
 
+    # Create synonym relationship
     if synonym != "tidak diketahui" and synonym != word:
         tx.run(
             "MERGE (s:Word {word: $synonym}) "
@@ -29,6 +26,7 @@ def insert_into_neo4j(tx, word, definition, tatabahasa, synonym, antonym):
             word=word, synonym=synonym, definition=definition, tatabahasa=tatabahasa
         )
 
+    # Create antonym relationship
     if antonym != "tidak diketahui" and antonym != word:
         tx.run(
             "MERGE (a:Word {word: $antonym}) "
@@ -42,6 +40,7 @@ def insert_into_neo4j(tx, word, definition, tatabahasa, synonym, antonym):
 def process_data(driver, redis_client, data):
     """Insert data into Neo4j and Redis."""
     with driver.session() as session:
+        print("Populating Neo4J")
         for row in data:
             word = row['word'].strip('"')
             definition = row['definition'].strip('"')
@@ -52,4 +51,8 @@ def process_data(driver, redis_client, data):
 
             # Insert into Neo4j
             session.write_transaction(insert_into_neo4j, word, definition, tatabahasa, synonym, antonym)
+
+            redis_client.hset(f"word:{word}", mapping={
+                "sentiment": sentiment
+            })
 
