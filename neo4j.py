@@ -11,6 +11,7 @@ word_details_csv_cleaned = spark.read.csv("assignData/word_details_csv_cleaned",
 data = word_details_csv_cleaned.collect()
 print(f"Output of word_details_csv_cleaned.show(20): {word_details_csv_cleaned.show(20)}")
 
+
 # Setup Neo4j and Redis
 driver = setup_neo4j_driver(
     uri="neo4j+s://abc.databases.neo4j.io",
