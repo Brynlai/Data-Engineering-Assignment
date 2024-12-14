@@ -167,7 +167,7 @@ filtered_cleaned_words_df = cleaned_words_df.filter(cleaned_words_df.Cleaned_Wor
 #REDIS
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
 
-from Redis_frequency import save_word_frequencies_to_redis
+from CustomRedisFunctions import save_word_frequencies_to_redis
 # Count the frequency of each word before removing duplicates
 word_frequencies_df = filtered_cleaned_words_df.groupBy("Cleaned_Word").count().withColumnRenamed("count", "Frequency")
 
