@@ -5,6 +5,7 @@ from typing import List, Optional
 from Classes import Scraped_Data, Comment
 from Scrapes import scrape_article
 import redis
+from UtilsRedis import save_word_frequencies_to_redis
 
 # PySpark setup
 spark = SparkSession.builder \
@@ -85,7 +86,6 @@ comments_df.write.option("header", True) \
 
 
 
-from pyspark.sql.functions import udf, split, col, concat, regexp_replace
 
 article_csv = spark.read.csv('assignData/articles_data_csv', header=True)
 comments_csv = spark.read.csv('assignData/comments_data_csv', header=True)
@@ -136,14 +136,6 @@ combined_words_df.show(50, truncate=True)
 print("Combined Words Count:", combined_words_df.count())
 
 
-
-
-
-
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import split, explode, udf
-from pyspark.sql.types import StringType
-
 # Define a UDF to convert words to lowercase and remove non-alphabetic characters
 def clean_word(word):
     return ''.join(char for char in word.lower() if char.isalpha())
@@ -167,7 +159,6 @@ filtered_cleaned_words_df = cleaned_words_df.filter(cleaned_words_df.Cleaned_Wor
 #REDIS
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
 
-from UtilsRedis import save_word_frequencies_to_redis
 # Count the frequency of each word before removing duplicates
 word_frequencies_df = filtered_cleaned_words_df.groupBy("Cleaned_Word").count().withColumnRenamed("count", "Frequency")
 
