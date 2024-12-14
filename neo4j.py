@@ -13,9 +13,9 @@ print(f"Output of word_details_csv_cleaned.show(20): {word_details_csv_cleaned.s
 
 # Setup Neo4j and Redis
 driver = setup_neo4j_driver(
-    uri="neo4j+s://cd6515ae.databases.neo4j.io",
+    uri="neo4j+s://abc.databases.neo4j.io",
     user="neo4j",
-    password="1Vzr5qr8k4XQ1Wuf-aKM9NJskun6N-4hSOTkBkRrbZ8"  # Remember to replace!
+    password="ab-ab-ab"  # Remember to replace!
 )
 
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
