@@ -6,8 +6,9 @@ print(GEMINIAPI)
 
 import google.generativeai as genai
 from pyspark.sql import SparkSession
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType, ArrayType, FloatType
-from pyspark.sql.functions import udf, explode, col
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType, ArrayType, FloatType, BooleanType
+from pyspark.sql.functions import udf, explode, col, row_number
+from pyspark.sql.window import Window
 from typing import List, Optional
 from UtilsGoogle import get_word_details
 
@@ -24,8 +25,6 @@ get_word_details(["whavig2yv2r"], str(GEMINIAPI))
 clean_words_df = spark.read.csv("assignData/clean_words_data_csv", header=True)
 print("clean_words_df.count():", clean_words_df.count())
 
-from pyspark.sql.window import Window
-from pyspark.sql.functions import row_number
 
 # Add a unique row number to the DataFrame
 window = Window.orderBy("Cleaned_Word")  # Adjust orderBy as needed
@@ -77,8 +76,7 @@ print(f"Data written to {output_path}")
 print(f"Number of usable word scsv_data_df : {csv_data_df.count()}")
 
 
-from pyspark.sql.functions import udf, col
-from pyspark.sql.types import BooleanType
+
 word_details_csv = spark.read.csv("assignData/word_details_csv", header=True)
 # Define UDF to filter out unusable words
 def is_usable(definition):
