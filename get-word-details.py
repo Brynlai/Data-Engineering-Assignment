@@ -1,8 +1,6 @@
 !pip install google.generativeai
 
-%env AIAPI=AIabcs....KEY
 GEMINIAPI = %env AIAPI
-print(GEMINIAPI)
 
 import google.generativeai as genai
 from pyspark.sql import SparkSession
@@ -17,14 +15,13 @@ spark = SparkSession.builder \
     .appName("ScrapedDataProcessor") \
     .getOrCreate()
 
+# To test
 get_word_details(["whavig2yv2r"], str(GEMINIAPI))
-
 
 
 # Read input data
 clean_words_df = spark.read.csv("assignData/clean_words_data_csv", header=True)
 print("clean_words_df.count():", clean_words_df.count())
-
 
 # Add a unique row number to the DataFrame
 window = Window.orderBy("Cleaned_Word")  # Adjust orderBy as needed
@@ -43,7 +40,7 @@ for i in range(0, total_rows, batch_size):
     # Call the get_word_details function with the batch
     batch_csv_data = get_word_details(batch_words, str(GEMINIAPI))
     
-    # Process the response
+    # Process the response, rows via \n and ignore header
     batch_rows = batch_csv_data.strip().split("\n")
     if batch_rows[0].startswith('"word"'):
         batch_rows = batch_rows[1:]
@@ -76,7 +73,6 @@ print(f"Data written to {output_path}")
 print(f"Number of usable word scsv_data_df : {csv_data_df.count()}")
 
 
-
 word_details_csv = spark.read.csv("assignData/word_details_csv", header=True)
 # Define UDF to filter out unusable words
 def is_usable(definition):
@@ -92,5 +88,8 @@ cleaned_data.write.csv("assignData/word_details_csv_cleaned", header=True, mode=
 
 print(f"Number of usable words: {cleaned_data.count()}")
 
+
 word_details_csv_cleaned = spark.read.csv("assignData/word_details_csv_cleaned", header=True)
 print(f"Output of word_details_csv_cleaned.show(20): {word_details_csv_cleaned.show(20)}")
+
+spark.stop()
