@@ -2,7 +2,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType
 import requests
 from bs4 import BeautifulSoup
-from typing import List
+from typing import List, Optional
 
 # Function to scrape all comments
 def scrape_comments(soup: BeautifulSoup, aid: int) -> List[tuple]:
@@ -64,6 +64,23 @@ def scrape_article(url: str, aid: int) -> tuple:
         comments = scrape_comments(soup, aid)
 
         return (aid, title, date, publisher, views, comments_count, content, comments)
+    except Exception as e:
+        print(f"Error scraping AID {aid}: {e}")
+        return None
+
+
+# UDF to scrape article and comments
+def scrape_data_udf(aid: int) -> Optional[tuple]:
+    base_url = "https://b.cari.com.my/portal.php?mod=view&aid="
+    url = f"{base_url}{aid}"
+    try:
+        print(f"Scraping AID: {aid}")
+        scraped_data = scrape_article(url, aid)
+        if scraped_data:
+            article = scraped_data[:-1]  # Exclude comments
+            comments = scraped_data[-1]  # Extract comments
+            return article, comments
+        return None
     except Exception as e:
         print(f"Error scraping AID {aid}: {e}")
         return None
