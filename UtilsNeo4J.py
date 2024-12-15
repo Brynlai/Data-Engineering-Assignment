@@ -37,7 +37,7 @@ def insert_into_neo4j(tx, word, definition, tatabahasa, synonym, antonym):
             word=word, antonym=antonym, definition=definition, tatabahasa=tatabahasa
         )
 
-def process_data(driver, redis_client, data):
+def populate_database(driver, redis_client, data):
     """Insert data into Neo4j and Redis."""
     with driver.session() as session:
         print("Populating Neo4J")
