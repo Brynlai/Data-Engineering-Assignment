@@ -1,0 +1,55 @@
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import explode, split, col, regexp_replace
+import os
+
+class WikipediaStreamingProcessor:
+    def __init__(self, app_name: str):
+        self.spark = SparkSession.builder \
+            .appName(app_name) \
+            .config("spark.sql.streaming.schemaInference", "true") \
+            .config("spark.sql.adaptive.enabled", "false") \
+            .getOrCreate()
+
+    def process_streaming_data(self, input_dir: str, output_dir: str):
+        # Read the streaming data from the input directory
+        streaming_df = self.spark.readStream \
+            .format("csv") \
+            .option("header", "true") \
+            .option("inferSchema", "true") \
+            .load(input_dir)
+
+        # Ensure necessary columns are present
+        if "Title" not in streaming_df.columns or "Cleaned_Word" not in streaming_df.columns:
+            raise ValueError("Input CSV must contain 'Title' and 'Cleaned_Word' columns.")
+
+        # Perform further processing if needed (e.g., filtering, transformations)
+        processed_df = streaming_df.select("Title", "Cleaned_Word")
+
+        # Write the streaming results to the output directory
+        query = processed_df.writeStream \
+            .format("csv") \
+            .option("path", output_dir) \
+            .option("checkpointLocation", f"{output_dir}/checkpoint") \
+            .outputMode("append") \
+            .start()
+
+        print(f"Streaming job started. Writing data to: {output_dir}")
+
+        # Block and wait for the streaming to finish
+        query.awaitTermination()
+
+        # Verify if files are written to the output directory
+        if os.path.exists(output_dir) and os.listdir(output_dir):
+            print(f"Files saved successfully in {output_dir}.")
+        else:
+            print(f"No files were saved in {output_dir}.")
+
+# Main function
+def main():
+    processor = WikipediaStreamingProcessor("WikipediaStreamingProcessor")
+    input_dir = "assignmentData/wikipedia_articles_tokenized.csv"  # Directory for tokenized input
+    output_dir = "assignmentData/Data_Streaming"  # Directory to save streaming output
+    processor.process_streaming_data(input_dir, output_dir)
+
+if __name__ == "__main__":
+    main()
