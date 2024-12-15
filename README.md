@@ -30,8 +30,8 @@ To set an env variable in a jupyter notebook, just use a % magic commands, eithe
 
 ### **4. Analytics**  
 - **What to Store**: Analytical results (e.g., word frequency, sentiment distribution).  
-- **Where to Store**: Local files (CSV/JSON) or a visualization platform (e.g., Tableau).  
-- **Tool**: PySpark for analytics, visualization tools for reporting.  
+- **Where to Store**: Local files (CSV), Neo4J and Redis.
+- **Tool**: Neo4J
 
 ---
 
