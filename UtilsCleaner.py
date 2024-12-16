@@ -47,6 +47,3 @@ def save_word_frequencies_to_redis(redis_client, word_frequencies_df):
             redis_client.set(row["Cleaned_Word"], row["Frequency"])
     except Exception as e:
         print(f"Error saving to Redis: {e}")
-
-
-
