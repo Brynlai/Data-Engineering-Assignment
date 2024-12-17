@@ -4,7 +4,7 @@ class Redis_Update_Count:
     valid_tatabahasa = [
         "kata nama", "kata kerja", "kata adjektif", "kata sendi", "kata keterangan", "tidak diketahui",
         "kata singkatan", "kata nama khas", "kata sendi nama", "kata ganti nama diri", "kata nama jamak",
-        "kata ganti nama", "kata kerja pasif", "kata seru", "kata sifat", "kata ganti nama diri tinggal",
+        "kata ganti nama", "kata kerja pasif", "kata seru", "kata sifat", "kata ganti nama diri tunggal",
         "singkatan", "kata ganti", "kata nama waktu", "kata tanya", "kata hubung", "kata tunjuk",
         "nombor", "kata keternagan masa", "kata nombor"
     ]
