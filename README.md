@@ -1,30 +1,44 @@
-# Python de-venv
-```
-source de-prj/de-venv/bin/activate
-```
+# Steps:
+1. ```wsl ~```
+2. Start: 
+  ```
+  start-dfs.sh
+  ```
+  ```
+  start-yarn.sh
+  ```
+  ```
+  zookeeper-server-start.sh $KAFKA_HOME/config/zookeeper.properties &
+  ```
+  Note: Wait for about 30 seconds before performing the next step.
+  ```
+  kafka-server-start.sh $KAFKA_HOME/config/server.properties &
+  ```
+  Note: Wait for about 30 seconds before performing the next step.
 
-To set an env variable in a jupyter notebook, just use a % magic commands, either %env or %set_env, e.g.,
+3. ```su - student```
+4.  Python de-venv
+  ```
+  source de-prj/de-venv/bin/activate
+  ```
+5. ```jupyter lab```
+6. Open 2 terminals in de-venv mode: (To show kafka working)
+   - Producer Terminal:
+       ```python kafka_producer_show.py```
+   - Consumer Terminal:
+        ```spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.13:3.5.1 kafka_consumer_show.py```
+
+
+
+
+## To set an env variable in a jupyter notebook, just use a % magic commands, either %env or %set_env, e.g.,
 ```
 %env MY_VAR=MY_VALUE
 ```
 (Use %env by itself to print out current environmental variables.)
 
 
-# Start: 
-```
-start-dfs.sh
-```
-```
-start-yarn.sh
-```
-```
-zookeeper-server-start.sh $KAFKA_HOME/config/zookeeper.properties &
-```
-Note: Wait for about 30 seconds before performing the next step.
-```
-kafka-server-start.sh $KAFKA_HOME/config/server.properties &
-```
-Note: Wait for about 30 seconds before performing the next step.
+
 
 
 
