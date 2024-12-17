@@ -57,7 +57,7 @@ def insert_into_neo4j(tx, word, definition, tatabahasa, synonym, antonym):
             word=word, antonym=antonym, definition=definition, tatabahasa=tatabahasa
         )
 
-def populate_database(driver, redis_client, data):
+def populate_database(driver, redis_util, data):
     """
     Insert data into Neo4j and Redis.
 
@@ -79,8 +79,7 @@ def populate_database(driver, redis_client, data):
             # Insert into Neo4j
             session.write_transaction(insert_into_neo4j, word, definition, tatabahasa, synonym, antonym)
 
-            # Store sentiment in Redis
-            redis_client.hset(f"sentiment:{word}", mapping={"sentiment": sentiment}) # Modified key for better organization
-
-            # update_redis_tatabahasa_count(tatabahasa)
-            # update_redis_sentiment_count(sentiment)
+            # Store and Update in Redis
+            redis_util.store_sentiment(word, sentiment)
+            redis_util.update_tatabahasa_count(tatabahasa)
+            redis_util.update_sentiment_count(sentiment)
