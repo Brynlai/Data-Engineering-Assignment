@@ -1,5 +1,6 @@
 from pyspark.sql import SparkSession
 from UtilsNeo4J import setup_neo4j_driver, insert_into_neo4j, populate_database
+from UtilsRedis import Redis_Util
 import redis
 
 # PySpark setup
