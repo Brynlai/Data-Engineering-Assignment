@@ -3,92 +3,111 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import explode, split, udf, lower
 from pyspark.sql.types import StringType
 
-def clean_word(word):
-    return ''.join(char for char in word.lower() if char.isalpha())
+class WordProcessor:
+    def __init__(self, spark_session):
+        """
+        Initialize WordProcessor with a Spark session.
+        """
+        self.spark = spark_session
 
-def process_words(spark_session, combined_words_df, redis_client=None):
-    """
-    Cleans, deduplicates, and counts word frequencies from a Spark DataFrame.
+    @staticmethod
+    def clean_word(word):
+        """
+        Cleans a word by converting it to lowercase and keeping only alphabetic characters.
+        """
+        return ''.join(char for char in word.lower() if char.isalpha())
 
-    Args:
-        spark_session: The SparkSession object.
-        combined_words_df: The input DataFrame containing a 'Word' column.
-        redis_client: Optional redis client for storing word frequencies.
-             If None, frequencies won't be saved to Redis.
+    def process_words(self, combined_words_df, redis_client=None):
+        """
+        Cleans, deduplicates, and counts word frequencies from a Spark DataFrame.
 
-    Returns:
-        A Spark DataFrame containing distinct cleaned words.
-    """
+        Args:
+            combined_words_df: The input DataFrame containing a 'Word' column.
+            redis_client: Optional Redis client for storing word frequencies.
+                          If None, frequencies won't be saved to Redis.
 
-    # Split, explode, and clean words using native Spark functions for better performance
-    cleaned_words_df = (combined_words_df
-                       .withColumn("Word", explode(split(lower(combined_words_df["Word"]), "[,;]")))
-                       .withColumn("Cleaned_Word", udf(clean_word, StringType())("Word"))
-                       .filter("Cleaned_Word != ''"))
+        Returns:
+            A Spark DataFrame containing distinct cleaned words.
+        """
+        # UDF for word cleaning
+        clean_word_udf = udf(self.clean_word, StringType())
 
-    if redis_client:
-        # Count and save word frequencies to Redis BEFORE deduplication
-        word_frequencies_df = cleaned_words_df.groupBy("Cleaned_Word").count().withColumnRenamed("count", "Frequency")
-        save_word_frequencies_to_redis(redis_client, word_frequencies_df)
+        # Split, explode, and clean words
+        cleaned_words_df = (
+            combined_words_df
+            .withColumn("Word", explode(split(lower(combined_words_df["Word"]), "[,;]")))
+            .withColumn("Cleaned_Word", clean_word_udf("Word"))
+            .filter("Cleaned_Word != ''")
+        )
 
-    distinct_cleaned_words_df = cleaned_words_df.select("Cleaned_Word").distinct()
+        if redis_client:
+            # Count and save word frequencies to Redis BEFORE deduplication
+            word_frequencies_df = (
+                cleaned_words_df.groupBy("Cleaned_Word")
+                .count()
+                .withColumnRenamed("count", "Frequency")
+            )
+            self.save_word_frequencies_to_redis(redis_client, word_frequencies_df)
 
-    print("Distinct Cleaned Combined Words:")
-    distinct_cleaned_words_df.show(50, truncate=True)
-    print("Distinct Cleaned Combined Words Count:", distinct_cleaned_words_df.count())
+        distinct_cleaned_words_df = cleaned_words_df.select("Cleaned_Word").distinct()
 
-    return distinct_cleaned_words_df
+        print("Distinct Cleaned Combined Words:")
+        distinct_cleaned_words_df.show(50, truncate=True)
+        print("Distinct Cleaned Combined Words Count:", distinct_cleaned_words_df.count())
 
-def save_word_frequencies_to_redis(redis_client, word_frequencies_df):
-    """Saves word frequencies to Redis."""
-    try:
-        for row in word_frequencies_df.collect():
-            redis_client.set(row["Cleaned_Word"], row["Frequency"])
-    except Exception as e:
-        print(f"Error saving to Redis: {e}")
+        return distinct_cleaned_words_df
 
-def main():
-    # Initialize Spark session
-    spark = SparkSession.builder \
-        .appName("CleanWordsDataProcessor") \
-        .getOrCreate()
+    @staticmethod
+    def save_word_frequencies_to_redis(redis_client, word_frequencies_df):
+        """
+        Saves word frequencies to Redis.
+        """
+        try:
+            for row in word_frequencies_df.collect():
+                redis_client.set(row["Cleaned_Word"], row["Frequency"])
+        except Exception as e:
+            print(f"Error saving to Redis: {e}")
 
-    # Load data from assignmentData/Data_Streaming
-    input_path = "assignmentData/Data_Streaming"
-    article_csv_words = spark.read.format("csv") \
-        .option("header", "true") \
-        .load(input_path)
 
-    # Inspect the DataFrame schema to confirm available columns
-    print("Schema of the loaded DataFrame:")
-    article_csv_words.printSchema()
+class SparkManager:
+    def __init__(self, app_name):
+        """
+        Initializes SparkManager with a SparkSession.
+        """
+        self.spark = SparkSession.builder.appName(app_name).getOrCreate()
 
-    # Use the correct column (e.g., Cochabamba0) and split into individual words
-    combined_words_df = article_csv_words.select(explode(split("Cochabamba0", "\\s+")).alias("Word"))
+    def load_csv(self, input_path, column_name):
+        """
+        Loads a CSV file and explodes the specified column into words.
 
-    # Show the first few rows to verify
-    print("Combined Words:")
-    combined_words_df.show(10, truncate=True)
-    print("Combined Words Count:", combined_words_df.count())
+        Args:
+            input_path: Path to the CSV file.
+            column_name: The column containing text data to split into words.
 
-    # Initialize Redis client
-    redis_client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
+        Returns:
+            A Spark DataFrame with words exploded into a 'Word' column.
+        """
+        article_csv_words = (
+            self.spark.read.format("csv")
+            .option("header", "true")
+            .load(input_path)
+        )
 
-    # Process words using UtilsCleaner
-    distinct_words_df = process_words(spark, combined_words_df, redis_client)
+        print("Schema of the loaded DataFrame:")
+        article_csv_words.printSchema()
 
-    # Write the DataFrame to CSV
-    output_path = "assignmentData/clean_words_data_csv"
-    distinct_words_df.write.option("header", True) \
-        .mode("overwrite") \
-        .option("quoteAll", True) \
-        .option("escape", "\"") \
-        .csv(output_path)
+        combined_words_df = article_csv_words.select(
+            explode(split(column_name, "\\s+")).alias("Word")
+        )
 
-    print(f"Processed data saved to {output_path}")
+        print("Combined Words:")
+        combined_words_df.show(10, truncate=True)
+        print("Combined Words Count:", combined_words_df.count())
 
-    # Stop Spark session
-    spark.stop()
+        return combined_words_df
 
-if __name__ == "__main__":
-    main()
+    def stop(self):
+        """
+        Stops the Spark session.
+        """
+        self.spark.stop()
