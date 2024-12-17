@@ -11,7 +11,6 @@ spark = SparkSession.builder \
     .getOrCreate()
     
     
-
 # Initialize ScrapedDataProcessor
 scraped_data_processor = ScrapedDataProcessor()
 scraped_data_processor.setup_udf(scrape_data_udf)
@@ -40,12 +39,11 @@ combined_words_df = scraped_combined_words_df.union(crawled_data_df)
 scraped_data_processor.save_cleaned_words(combined_words_df, process_words)
 
 
-
 # === 2. Lexicon Creation ===
 # === 3. Lexicon Enrichment ===
 # === * Definition, Antonym, Synonym, Tatabahasa, Sentiment ===
 # Initialize WordDetailsProcessor
-gemini_api = 'abc'  # Replace with your actual Gemini API key
+gemini_api = 'abcv'  # Replace with your actual Gemini API key
 word_details_processor = WordDetailsProcessor(gemini_api)
 
 # Read and process clean words
