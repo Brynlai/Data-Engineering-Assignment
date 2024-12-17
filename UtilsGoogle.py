@@ -16,15 +16,27 @@ def get_word_details(words: List[str], gemini_api_key: str) -> str:
     print("Start get_word_details")
     genai.configure(api_key=gemini_api_key) # Replace with your actual API key
 
-    # Create the model
+
+    # Create the model with specific generation configuration
     generation_config = {
-        "temperature": 0.7,
-        "top_p": 0.9,
-        "top_k": 20,
-        "max_output_tokens": 8192,  # Double the current limit if supported by the API
-        "response_mime_type": "text/plain",
-    }
+        # Temperature: Controls the randomness and creativity of the generated text.
+        "temperature": 0.9, # Balances determinism and creativity.
     
+        # Top-p (Nucleus Sampling): Sets a cumulative probability threshold for word selection.
+        "top_p": 0.90, # Ensures words with 90% or more cumulative probability are considered.
+    
+        # Top-k: Restricts word selection to the top-k most probable words.
+        "top_k": 20, # Limits selection to the top 20 most probable words.
+    
+        # Max Output Tokens: Specifies the maximum number of tokens the model can generate.
+        "max_output_tokens": 8192, # Allows for longer responses.
+    
+        # Response MIME Type: Defines the format of the response data.
+        "response_mime_type": "text/plain", # Ensures the response is in plain text format.
+    }
+
+
+    # Select llm model and config
     model = genai.GenerativeModel(
         model_name="gemini-1.5-flash-8b",
         generation_config=generation_config,
@@ -33,13 +45,14 @@ def get_word_details(words: List[str], gemini_api_key: str) -> str:
     chat_session = model.start_chat()
     
     # Improved prompt
-    prompt = f"""You are a Labeling Machine. Generate in text a CSV file with the structure: "word,definition,antonym,synonym,tatabahasa,sentiment". 
+    prompt = f"""You are a very generalized consistent Labeling Machine specializing in Bahasa Malaysia and Mixed Malay. Generate in text a CSV file with the structure: "word,definition,antonym,synonym,tatabahasa,sentiment". 
     Rules:
     1. Definition must explain the word in Malay and not repeat the word.
     2. Antonyms and synonyms must be meaningful; use "tidak diketahui" if unavailable.
-    3. Tatabahasa must be two Malay words like "kata nama".
+    3. Tatabahasa must be the most concise Malay words like "kata nama".
     4. Sentiment is a string between "-1.0" and "1.0", neutral being "0.0".
     5. Enclose all values in double quotes.
+    6. In each row, each column of that row must not be the same.
     Example:
     "word","definition","antonym","synonym","tatabahasa","sentiment"
     "kami","kata ganti nama diri jamak, merujuk kepada penutur","mereka","kita","kata ganti","0.0"
