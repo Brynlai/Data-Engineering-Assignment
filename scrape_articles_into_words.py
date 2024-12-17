@@ -9,6 +9,8 @@ from pyspark.sql import SparkSession
 spark = SparkSession.builder \
     .appName("ScrapedAndCrawledWordsProcessor") \
     .getOrCreate()
+    
+    
 
 # Initialize ScrapedDataProcessor
 scraped_data_processor = ScrapedDataProcessor()
@@ -25,10 +27,12 @@ scraped_data_processor.save_dataframes(article_df, comments_df)
 
 # Process words
 scraped_combined_words_df = scraped_data_processor.process_words('assignData/articles_data_csv_test', 'assignData/comments_data_csv_test')
+print(f"For cari.coom.my, number of words:",scraped_combined_words_df.show(5))
 
 # Read CSV file produced by kafka_consumer_show.py
-crawled_data_df = spark.read.csv("assignData/wiki_word_data_csv_test", header=True)
-crawled_data_df.show(10)
+crawled_data_df = spark.read.option("inferSchema", "true").csv("assignData/wiki_word_data_csv_test", header=True)
+crawled_data_df.show(20)
+print("Start of Union")
 # Combine scraped and crawled words
 combined_words_df = scraped_combined_words_df.union(crawled_data_df)
 
@@ -41,7 +45,7 @@ scraped_data_processor.save_cleaned_words(combined_words_df, process_words)
 # === 3. Lexicon Enrichment ===
 # === * Definition, Antonym, Synonym, Tatabahasa, Sentiment ===
 # Initialize WordDetailsProcessor
-gemini_api = 'fwaf'  # Replace with your actual Gemini API key
+gemini_api = 'abc'  # Replace with your actual Gemini API key
 word_details_processor = WordDetailsProcessor(gemini_api)
 
 # Read and process clean words

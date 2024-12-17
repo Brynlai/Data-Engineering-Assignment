@@ -106,6 +106,7 @@ class ScrapedDataProcessor:
                                          .withColumn("Comment_Text_Words", split(col("Comment_Text"), " "))
 
         combined_words_df = article_csv_words.select(explode("Combined_Words").alias("Word"))
+
         return combined_words_df
 
     def save_cleaned_words(self, combined_words_df, process_words_func):

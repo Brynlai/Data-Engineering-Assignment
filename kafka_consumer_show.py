@@ -48,6 +48,7 @@ def kafka_consumer():
     query_to_csv = filtered_words_df.writeStream \
         .outputMode("append") \
         .format("csv") \
+        .option("header", "true") \
         .option("path", "assignData/wiki_word_data_csv_test") \
         .option("checkpointLocation", "assignData/wiki_word_data_checkpoint_test") \
         .start()
