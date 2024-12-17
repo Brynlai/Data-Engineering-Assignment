@@ -29,7 +29,7 @@ scraped_data_processor.save_cleaned_words(scraped_combined_words_df, process_wor
 # === 3. Lexicon Enrichment ===
 # === * Definition, Antonym, Synonym, Tatabahasa, Sentiment ===
 # Initialize WordDetailsProcessor
-gemini_api = 'AIzaSyBm3OuNffuMnLAv8T9rlUfTfkZWY541nio'  # Replace with your actual Gemini API key
+gemini_api = 'fwaf'  # Replace with your actual Gemini API key
 word_details_processor = WordDetailsProcessor(gemini_api)
 
 # Read and process clean words
