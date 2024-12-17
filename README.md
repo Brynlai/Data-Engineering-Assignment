@@ -1,28 +1,31 @@
 # Python de-venv
 ```
-$ source de-prj/de-venv/bin/activate
+source de-prj/de-venv/bin/activate
 ```
 
 To set an env variable in a jupyter notebook, just use a % magic commands, either %env or %set_env, e.g.,
 ```
 %env MY_VAR=MY_VALUE
-or
-%env MY_VAR MY_VALUE.
 ```
 (Use %env by itself to print out current environmental variables.)
 
 
 # Start: 
 ```
-hduser@PC25:~$ start-dfs.sh
-hduser@PC25:~$ start-yarn.sh
-
-$ zookeeper-server-start.sh $KAFKA_HOME/config/zookeeper.properties &
-Note: Wait for about 30 seconds before performing the next step.
-
-$ kafka-server-start.sh $KAFKA_HOME/config/server.properties &
+start-dfs.sh
+```
+```
+start-yarn.sh
+```
+```
+zookeeper-server-start.sh $KAFKA_HOME/config/zookeeper.properties &
+```
 Note: Wait for about 30 seconds before performing the next step.
 ```
+kafka-server-start.sh $KAFKA_HOME/config/server.properties &
+```
+Note: Wait for about 30 seconds before performing the next step.
+
 
 
 # Stop: 
