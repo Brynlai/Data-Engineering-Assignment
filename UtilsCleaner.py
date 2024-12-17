@@ -63,3 +63,5 @@ def save_word_frequencies_to_redis(redis_client, word_frequencies_df):
             redis_client.hset("word_frequencies", row["Cleaned_Word"], row["Frequency"]) # Save word and its frequency to Redis hash "word_frequencies"
     except Exception as e:
         print(f"Error saving to Redis: {e}") # Print any error that occurs during Redis save
+
+
