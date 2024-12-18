@@ -1,20 +1,14 @@
-from pyspark.sql import SparkSession
 from UtilsNeo4J import setup_neo4j_driver, insert_into_neo4j, populate_database
 from UtilsRedis import Redis_Update_Count
 import redis
-
-# PySpark setup
-spark = SparkSession.builder \
-    .appName("Populate Neo4j") \
-    .getOrCreate()
+# Initialize SparkSession
+from GlobalSparkSession import global_spark_session
+spark = global_spark_session()
 
 # Load data from the cleaned CSV file
 word_details_csv_cleaned = spark.read.csv("assignData/word_details_csv_cleaned_test", header=True)
 # Convert the Spark DataFrame to a list of Rows for easier processing
 data = word_details_csv_cleaned.collect()
-print(f"data: {word_details_csv_cleaned.show(20)}")
-
-
 
 
 # Setup Neo4j driver
@@ -23,7 +17,6 @@ driver = setup_neo4j_driver(
     user="neo4j",
     password="abc"  # Remember to replace with your actual password!
 )
-
 
 # Create Instance
 redis_handler = Redis_Update_Count()
