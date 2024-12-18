@@ -3,6 +3,12 @@ from kafka import KafkaProducer
 from UtilsWikipedia import fetch_search_results, fetch_page_content, extract_page_info
 
 def kafka_producer():
+    """
+    Produces Wikipedia page data to a Kafka topic.
+
+    This function fetches search results from the Wikipedia API, retrieves the content
+    of each page, and sends the title and content as JSON messages to a Kafka topic.
+    """
     # Create Kafka producer
     producer = KafkaProducer(
         bootstrap_servers='localhost:9092',
@@ -20,7 +26,7 @@ def kafka_producer():
             print(f"Producing message: {page_info}")
             producer.send('wiki_topic', page_info)
 
-    # Flush and close the 
+    # Flush and close the producer to ensure all messages are sent
     producer.flush()
     producer.close()
 
