@@ -3,6 +3,13 @@ from pyspark.sql.types import StructType, StructField, StringType
 from GlobalSparkSession import global_spark_session
 
 def kafka_consumer():
+    """
+    Consumes data from Kafka, processes it, and saves it to a CSV file.
+
+    This function reads data from a Kafka topic, extracts title and content from JSON messages,
+    cleans the content, splits it into words, filters out empty words, and saves the results
+    to a CSV file. It also prints the filtered words to the console.
+    """
     # Define the schema for the JSON messages
     schema = StructType([
         StructField("Title", StringType(), True),
@@ -38,7 +45,7 @@ def kafka_consumer():
     # Filter out empty words
     filtered_words_df = exploded_words_df.filter(col("Word") != "")
 
-    # Print the filtered words
+    # Print the filtered words to the console
     query = filtered_words_df.writeStream \
         .outputMode("append") \
         .format("console") \
@@ -53,6 +60,7 @@ def kafka_consumer():
         .option("checkpointLocation", "assignData/wiki_word_data_checkpoint_test") \
         .start()
     
+    # Wait for both queries to terminate
     query.awaitTermination()
     query_to_csv.awaitTermination()
 
