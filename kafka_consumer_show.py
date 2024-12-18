@@ -1,6 +1,6 @@
-from pyspark.sql import SparkSession
 from pyspark.sql.functions import from_json, col, regexp_replace, split, explode
 from pyspark.sql.types import StructType, StructField, StringType
+from GlobalSparkSession import global_spark_session
 
 def kafka_consumer():
     # Define the schema for the JSON messages
@@ -10,7 +10,7 @@ def kafka_consumer():
     ])
 
     # Create Spark session
-    spark = SparkSession.builder.appName("KafkaConsumer").getOrCreate()
+    spark = global_spark_session()
 
     # Read data from Kafka
     df = spark \
