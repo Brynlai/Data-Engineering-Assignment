@@ -23,10 +23,10 @@ def get_word_details(words: List[str], gemini_api_key: str) -> str:
         "temperature": 0.9, # Balances determinism and creativity.
     
         # Top-p (Nucleus Sampling): Sets a cumulative probability threshold for word selection.
-        "top_p": 0.90, # Ensures words with 90% or more cumulative probability are considered.
+        "top_p": 0.92, # Ensures words with 92% or more cumulative probability are considered.
     
         # Top-k: Restricts word selection to the top-k most probable words.
-        "top_k": 20, # Limits selection to the top 20 most probable words.
+        "top_k": 30, # Limits selection to the top 20 most probable words.
     
         # Max Output Tokens: Specifies the maximum number of tokens the model can generate.
         "max_output_tokens": 8192, # Allows for longer responses.
