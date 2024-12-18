@@ -34,7 +34,8 @@ This project involves processing and analyzing scraped data using PySpark, Redis
    jupyter lab
    ```
    
-2. Open 2 terminals in *de-venv* mode: (To show kafka working) cd into the directory both files are in!
+2. Open 2 Powershell Terminals from Windows, then go (de-venv) student@R2D3:~/urdirectory$
+3. (To show kafka working) cd into the directory both files are in!
     - Producer Terminal:
        ```bash
        python kafka_producer_show.py
@@ -46,9 +47,10 @@ This project involves processing and analyzing scraped data using PySpark, Redis
      > [!IMPORTANT]  
         DO NOT RUN 
         "$ python kafka_producer_show.py"
-        when scrape_aritcles_into_words.ipynb or neo4j.ipynb is running
+        when scrape_aritcles_into_words.ipynb or neo4j.ipynb is running.
+        "kafka_consumer_show.py" can run in the background. 
 
-3. Run the notebooks in this sequence:
+4. Run the notebooks in this sequence:
    - `scrape_articles_into_words.ipynb`
    - `neo4j.ipynb`
 
