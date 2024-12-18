@@ -1,6 +1,4 @@
 import google.generativeai as genai
-from pyspark.sql import SparkSession
-from pyspark.sql.types import StructType, StructField, StringType
 from typing import List
 
 def get_word_details(words: List[str], gemini_api_key: str) -> str:

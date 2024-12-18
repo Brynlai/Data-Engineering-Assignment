@@ -1,5 +1,3 @@
-from pyspark.sql import SparkSession
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType
 import requests
 from bs4 import BeautifulSoup
 from typing import List, Optional
