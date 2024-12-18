@@ -25,7 +25,7 @@ driver = setup_neo4j_driver(
 )
 
 
-# Create instance
+# Create Instance
 redis_handler = Redis_Update_Count()
 
 # Populate the Neo4j database with the data
