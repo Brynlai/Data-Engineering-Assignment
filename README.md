@@ -27,7 +27,7 @@ This project involves processing and analyzing scraped data using PySpark, Redis
     ```bash
     su - student
     ```
-### Running Notebooks
+### Running Notebooks (Curently not working if ru scrape_article while consumer is running.)
 1. Activate the virtual environment and start Jupyter Lab:
    ```bash
    source de-prj/de-venv/bin/activate
