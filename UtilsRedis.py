@@ -12,7 +12,6 @@ class Redis_Update_Count:
     def __init__(self, host="localhost", port=6379, db=0):
         """
         Initialize the Redis connection.
-
         Args:
             host (str): Redis server host.
             port (int): Redis server port.
@@ -23,7 +22,6 @@ class Redis_Update_Count:
     def update_tatabahasa_count(self, tatabahasa):
         """
         Increment the count of a specific tatabahasa type in Redis after validation.
-
         Args:
             tatabahasa (str): The grammatical category to increment.
         """
@@ -37,7 +35,6 @@ class Redis_Update_Count:
     def update_sentiment_count(self, sentiment):
         """
         Increment the count of sentiment distribution (positive, neutral, negative) in Redis.
-
         Args:
             sentiment (float): Sentiment score to categorize and increment.
         """
@@ -52,14 +49,13 @@ class Redis_Update_Count:
     def store_sentiment(self, word, sentiment):
         """
         Store or update the sentiment value for a specific word in Redis.
-
         Args:
             word (str): The word key to store the sentiment.
             sentiment (float): The sentiment score.
         """
         redis_key = f"sentiment:{word}"
         self.redis_client.hset(redis_key, mapping={"sentiment": sentiment})
-    
+
     def close(self):
         """
         Close the Redis connection.
