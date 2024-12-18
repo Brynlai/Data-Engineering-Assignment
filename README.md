@@ -24,9 +24,9 @@
 5. ```jupyter lab```
 6. Open 2 terminals in de-venv mode: (To show kafka working) In the directory both files are in!
    - Producer Terminal:
-       ```python kafka_producer_show.py```
+       - ```python kafka_producer_show.py```
    - Consumer Terminal:
-        ```spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.13:3.5.1 kafka_consumer_show.py```
+       - ```spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.13:3.5.1 kafka_consumer_show.py```
 
 7. Close the Producer Terminal and Consumer Terminal.
 8. Run scrape_articles_into_words.ipynb
