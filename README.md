@@ -34,7 +34,7 @@ This project involves processing and analyzing scraped data using PySpark, Redis
    jupyter lab
    ```
    
-2. Open 2 terminals in de-venv mode: (To show kafka working) In the directory both files are in!
+2. Open 2 terminals in de-venv mode: (To show kafka working) cd into the directory both files are in!
     - Producer Terminal:
        ```bash
        python kafka_producer_show.py
