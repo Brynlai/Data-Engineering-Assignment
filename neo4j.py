@@ -1,5 +1,6 @@
 from pyspark.sql import SparkSession
 from UtilsNeo4J import setup_neo4j_driver, insert_into_neo4j, populate_database
+from UtilsRedis import Redis_Update_Count
 import redis
 
 # PySpark setup
@@ -23,11 +24,12 @@ driver = setup_neo4j_driver(
     password="abc"  # Remember to replace with your actual password!
 )
 
-# Setup Redis client
-redis_client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
+
+# Create instance
+redis_handler = Redis_Update_Count()
 
 # Populate the Neo4j database with the data
-populate_database(driver, redis_client, data)
+populate_database(driver, redis_handler, data)
 
 # Query Neo4j to verify the number of nodes created
 with driver.session() as session:
