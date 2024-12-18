@@ -22,7 +22,7 @@
   source de-prj/de-venv/bin/activate
   ```
 5. ```jupyter lab```
-6. Open 2 terminals in de-venv mode: (To show kafka working)
+6. Open 2 terminals in de-venv mode: (To show kafka working) In the directory both files are in!
    - Producer Terminal:
        ```python kafka_producer_show.py```
    - Consumer Terminal:
