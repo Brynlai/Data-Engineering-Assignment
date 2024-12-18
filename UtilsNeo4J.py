@@ -69,12 +69,18 @@ def populate_database(driver, redis_util, data):
     with driver.session() as session:
         print("Populating Neo4J")
         for row in data:
+            print(f"Populating: {row}")
             word = row['word'].strip('"')
             definition = row['definition'].strip('"')
             antonym = row['antonym'].strip('"')
             synonym = row['synonym'].strip('"')
             tatabahasa = row['tatabahasa'].strip('"')
-            sentiment = float(row['sentiment'].strip('"'))
+            
+            try:
+              sentiment = float(row['sentiment'].strip('"'))
+            except ValueError:
+                print(f"Skipping row with invalid sentiment data for word: {word}, sentiment {sentiment}")
+                continue
 
             # Insert into Neo4j
             session.write_transaction(insert_into_neo4j, word, definition, tatabahasa, synonym, antonym)

@@ -18,7 +18,7 @@ scraped_data_processor.setup_udf(scrape_data_udf)
 # === 1. Data Collection and preparation ===
 # === * cari.com.my and wikipedia api ===
 # Define AID values
-aid_values = list(range(44, 45))
+aid_values = list(range(100, 200))
 
 # Process articles and comments
 article_df, comments_df = scraped_data_processor.process_articles(aid_values)
@@ -51,7 +51,7 @@ clean_words_df = word_details_processor.read_clean_words('assignData/clean_words
 clean_words_df = word_details_processor.add_row_number(clean_words_df)
 
 # Batch process word details: Word, Definition, Antonym, Synonym, Tatabahasa, Sentiment.
-all_csv_data = word_details_processor.batch_process(clean_words_df, 50, get_word_details)
+all_csv_data = word_details_processor.batch_process(clean_words_df, 100, get_word_details)
 word_details_processor.parse_and_save(all_csv_data, 'assignData/word_details_csv_test')
 
 # Filter usable words
