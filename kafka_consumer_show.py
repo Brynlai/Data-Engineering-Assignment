@@ -20,6 +20,7 @@ def kafka_consumer():
     spark = global_spark_session()
 
     # Read data from Kafka
+    # Spark Structured Streaming starts here
     df = spark \
         .readStream \
         .format("kafka") \
