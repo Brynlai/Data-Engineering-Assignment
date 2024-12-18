@@ -28,7 +28,7 @@
    - Consumer Terminal:
        - ```spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.13:3.5.1 kafka_consumer_show.py```
 
-7. Close the Producer Terminal and Consumer Terminal.
+7. DO NOT RUN PRODUCER when scrape_aritcles_into_words.ipynb or neo4j.ipynb is running
 8. Run scrape_articles_into_words.ipynb
 9. Run neo4j.ipynb
 
