@@ -1,8 +1,10 @@
-from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, ArrayType, BooleanType
 from pyspark.sql.functions import udf, split, col, concat, regexp_replace, explode, row_number
 from pyspark.sql.window import Window
 from typing import List
+
+# Initialize SparkSession
+from GlobalSparkSession import global_spark_session
 
 import redis
 import google.generativeai as genai
@@ -15,9 +17,8 @@ class ScrapedDataProcessor:
         """
         Initializes SparkSession and Redis client.
         """
-        self.spark = SparkSession.builder \
-            .appName("ScrapedDataProcessor") \
-            .getOrCreate()
+        self.spark = global_spark_session()
+
         self.redis_client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
 
     def setup_udf(self, scrape_data_udf):
@@ -136,9 +137,8 @@ class WordDetailsProcessor:
         Args:
             gemini_api: Gemini API key.
         """
-        self.spark = SparkSession.builder \
-            .appName("ScrapedDataProcessor") \
-            .getOrCreate()
+        self.spark = global_spark_session()
+
         self.gemini_api = gemini_api
 
     def read_clean_words(self, path):
