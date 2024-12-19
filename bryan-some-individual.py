@@ -2,10 +2,11 @@
 from neo4j import GraphDatabase
 import matplotlib.pyplot as plt
 import networkx as nx
-from UtilsNeo4J import setup_neo4j_driver, get_total_unique_entries
+from UtilsNeo4J import setup_neo4j_driver, get_total_unique_entries, get_synonyms, get_antonyms, get_word_sentiment
 
 driver = setup_neo4j_driver(
-    uri="neo4j+s://abc.databases.neo4j.io",
+    # bryanlaipublic neo4j+s://347f7494.databases.neo4j.io   [] XpUhrABmE3zD3Cl5Qnmptof7YWT3xmAe7J3HNUpWj6Q
+    uri="neo4j+s://abv.databases.neo4j.io",
     user="neo4j",
     password="abc"  # Remember to replace with your actual password!
 )
@@ -48,6 +49,7 @@ def identify_clusters(G):
     return themes
 
 
+
 G = create_synonym_network(driver, limit=30)  # Limit to 25 words
 visualize_network(G)
 
@@ -57,48 +59,13 @@ for theme_id, words in themes.items():
 
 
 
-def get_synonyms(driver, word):
-    """
-    Retrieve synonyms for a given word.
 
-    Args:
-        driver (neo4j.Driver): The Neo4j driver instance.
-        word (str): The word to search for.
-
-    Returns:
-        list: A list of synonyms.
-    """
-    query = """
-    MATCH (w:Word {word: $word})-[:SYNONYM]->(synonym:Word)
-    RETURN synonym.word AS synonym
-    """
-    with driver.session() as session:
-        result = session.run(query, word=word)
-        return [record["synonym"] for record in result]
-
-def get_antonyms(driver, word):
-    """
-    Retrieve antonyms for a given word.
-
-    Args:
-        driver (neo4j.Driver): The Neo4j driver instance.
-        word (str): The word to search for.
-
-    Returns:
-        list: A list of antonyms.
-    """
-    query = """
-    MATCH (w:Word {word: $word})-[:ANTONYM]->(antonym:Word)
-    RETURN antonym.word AS antonym
-    """
-    with driver.session() as session:
-        result = session.run(query, word=word)
-        return [record["antonym"] for record in result]
-
-
-word_to_search = "gembira"
+word_to_search = "negara"
 synonyms = get_synonyms(driver, word_to_search)
 antonyms = get_antonyms(driver, word_to_search)
+sentiment = get_word_sentiment(driver, word_to_search)
+
 
 print(f"Synonyms for '{word_to_search}': {', '.join(synonyms)}")
 print(f"Antonyms for '{word_to_search}': {', '.join(antonyms)}")
+print(f"Sentiment for '{word_to_search}': {sentiment}")
