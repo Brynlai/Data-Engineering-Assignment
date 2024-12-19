@@ -1,6 +1,6 @@
 from pyspark.sql.functions import from_json, col, regexp_replace, split, explode
 from pyspark.sql.types import StructType, StructField, StringType
-from GlobalSparkSession import global_spark_session
+from pyspark.sql import SparkSession
 
 def kafka_consumer():
     """
@@ -17,7 +17,10 @@ def kafka_consumer():
     ])
 
     # Create Spark session
-    spark = global_spark_session()
+    spark = SparkSession.builder \
+        .appName("data-engineering-project") \
+        .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.3") \
+        .getOrCreate()
 
     # Read data from Kafka
     # Spark Structured Streaming starts here
