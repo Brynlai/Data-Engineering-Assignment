@@ -9,6 +9,7 @@ spark = global_spark_session()
 word_details_csv_cleaned = spark.read.csv("assignData/word_details_csv_cleaned_test", header=True)
 # Convert the Spark DataFrame to a list of Rows for easier processing
 data = word_details_csv_cleaned.collect()
+print(len(data))  # Use len() to get the count of elements in the list
 
 
 # Setup Neo4j driver
