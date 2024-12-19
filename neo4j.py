@@ -12,8 +12,11 @@ data = word_details_csv_cleaned.collect()
 print(len(data))  # Use len() to get the count of elements in the list
 
 
+
+
 # Setup Neo4j driver
 driver = setup_neo4j_driver(
+    # bryanlaipublic neo4j+s://347f7494.databases.neo4j.io   [] XpUhrABmE3zD3Cl5Qnmptof7YWT3xmAe7J3HNUpWj6Q
     uri="neo4j+s://abc.databases.neo4j.io",
     user="neo4j",
     password="abc"  # Remember to replace with your actual password!
