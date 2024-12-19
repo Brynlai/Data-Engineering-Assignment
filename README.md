@@ -42,7 +42,7 @@ This project involves processing and analyzing scraped data using PySpark, Redis
         ```
    - Consumer Terminal:
        ```bash
-        spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.13:3.5.1 kafka_consumer_show.py
+        python kafka_consumer_show.py
         ```
      > [!IMPORTANT]  
         DO NOT RUN 
