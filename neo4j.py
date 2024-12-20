@@ -1,5 +1,5 @@
 from UtilsNeo4J import setup_neo4j_driver, insert_into_neo4j, populate_database
-from UtilsRedis import Redis_Update_Count
+from UtilsRedis import Redis_Utilities
 import redis
 # Initialize SparkSession
 from GlobalSparkSession import global_spark_session
@@ -19,7 +19,7 @@ driver = setup_neo4j_driver(
 )
 
 # Create Instance
-redis_handler = Redis_Update_Count()
+redis_handler = Redis_Utilities()
 
 # Populate the Neo4j database with the data
 populate_database(driver, redis_handler, data)

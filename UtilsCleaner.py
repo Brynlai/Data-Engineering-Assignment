@@ -1,5 +1,6 @@
 from pyspark.sql.functions import split, explode, udf, lower
 from pyspark.sql.types import StringType
+from UtilsRedis import Redis_Utilities
 import redis
 
 def clean_word(word):
@@ -34,12 +35,13 @@ def process_words(spark_session, combined_words_df, redis_client=redis.StrictRed
                        .withColumn("Cleaned_Word", udf(clean_word, StringType())("Word")) # Apply the clean_word function to each word
                        .filter("Cleaned_Word != ''")) # Filter out empty strings
 
+    redis = Redis_Utilities()
+    if redis:
+        # Count word frequencies (before deduplication)
+        word_frequencies_df = cleaned_words_df.groupBy("Cleaned_Word").count().withColumnRenamed("count", "Frequency")
 
-    if redis_client:
-        # Count and save word frequencies to Redis BEFORE deduplication
-        word_frequencies_df = cleaned_words_df.groupBy("Cleaned_Word").count().withColumnRenamed("count", "Frequency") # Calculate word frequencies
-        save_word_frequencies_to_redis(redis_client, word_frequencies_df) # Save frequencies to Redis
-
+        # Increment the frequencies in Redis
+        redis.update_word_frequencies(word_frequencies_df)  # Use method from Redis_Utilities
 
     distinct_cleaned_words_df = cleaned_words_df.select("Cleaned_Word").distinct() # Deduplicate cleaned words
 
@@ -48,20 +50,4 @@ def process_words(spark_session, combined_words_df, redis_client=redis.StrictRed
     print("Distinct Cleaned Combined Words Count:", distinct_cleaned_words_df.count()) # Print the total count of distinct cleaned words
 
     return distinct_cleaned_words_df
-
-
-def save_word_frequencies_to_redis(redis_client, word_frequencies_df):
-    """
-    Saves word frequencies to Redis.
-
-    Args:
-        redis_client (redis.StrictRedis): The Redis client instance.
-        word_frequencies_df (DataFrame): DataFrame containing word frequencies.
-    """
-    try:
-        for row in word_frequencies_df.collect(): # Iterate through each row of the DataFrame
-            redis_client.hset("word_frequencies", row["Cleaned_Word"], row["Frequency"]) # Save word and its frequency to Redis hash "word_frequencies"
-    except Exception as e:
-        print(f"Error saving to Redis: {e}") # Print any error that occurs during Redis save
-
 
