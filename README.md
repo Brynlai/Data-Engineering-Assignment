@@ -1,4 +1,4 @@
-# Data Engineering Assignment
+# Data Engineering Assignment Qing-Indi_V1
 
 ## Description
 This project involves processing and analyzing scraped data using PySpark, Redis, and Neo4j. The aim is to store, process, and analyze text data efficiently.
