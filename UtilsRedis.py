@@ -1,6 +1,6 @@
 import redis
 
-class Redis_Utilities:
+class Redis_Update_Count:
     valid_tatabahasa = [
         "kata nama", "kata kerja", "kata adjektif", "kata sendi", "kata keterangan", "tidak diketahui",
         "kata singkatan", "kata nama khas", "kata sendi nama", "kata ganti nama diri", "kata nama jamak",
@@ -55,83 +55,7 @@ class Redis_Utilities:
         """
         redis_key = f"sentiment:{word}"
         self.redis_client.hset(redis_key, mapping={"sentiment": sentiment})
-        
-    def update_word_frequencies(self, word_frequencies_df):
-        """
-        Increment the frequency of words in Redis.
 
-        Args:
-            word_frequencies_df (DataFrame): DataFrame containing word frequencies.
-        """
-        redis_key = "word:frequencies"  # Redis hash key to store word frequencies
-        try:
-            for row in word_frequencies_df.collect():
-                word = row["Cleaned_Word"]
-                frequency = row["Frequency"]
-                # Increment the word count in Redis hash using hincrby
-                self.redis_client.hincrby(redis_key, word, frequency)
-        except Exception as e:
-                print(f"Error saving to Redis: {e}")
-
-    # get functions to retrieve
-
-    def get_tatabahasa_count(self):
-        """
-        Retrieve all tatabahasa counts from Redis.
-
-        Returns:
-            dict: A dictionary containing tatabahasa counts.
-        """
-        redis_key = "tatabahasa:counts"
-        return self.redis_client.hgetall(redis_key)
-
-    def get_sentiment_count(self):
-        """
-        Retrieve sentiment distribution counts from Redis.
-
-        Returns:
-            dict: A dictionary containing counts for positive, neutral, and negative sentiments.
-        """
-        redis_key = "sentiment:counts"
-        return self.redis_client.hgetall(redis_key)
-
-    def get_sentiment(self, word):
-        """
-        Retrieve the sentiment value for a specific word from Redis.
-
-        Args:
-            word (str): The word key to retrieve the sentiment.
-
-        Returns:
-            dict: Sentiment data for the word, or None if not found.
-        """
-        redis_key = f"sentiment:{word}"
-        return self.redis_client.hgetall(redis_key)
-        
-    def get_word_frequencies(self, word):
-        """
-        Retrieve all word frequencies from Redis.
-
-        Returns:
-            dict: A dictionary containing word frequencies.
-        """
-        redis_key = "word:frequencies"
-        return self.redis_client.hgetall(redis_key)
-
-    def get_word_frequency(self, word):
-        """
-        Retrieve the frequency of an individual word from Redis.
-
-        Args:
-            word (str): The word to retrieve the frequency for.
-
-        Returns:
-            int: Frequency of the word, or 0 if the word does not exist.
-        """
-        redis_key = "word:frequencies"
-        frequency = self.redis_client.hget(redis_key, word)
-        return int(frequency) if frequency else 0
-        
     def close(self):
         """
         Close the Redis connection.
