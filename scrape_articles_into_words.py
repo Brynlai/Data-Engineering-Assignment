@@ -3,6 +3,7 @@ from ForumScraper import scrape_data_udf
 from UtilsCleaner import process_words
 from UtilsGoogle import get_word_details
 import google.generativeai as genai
+import redis
 
 # Initialize SparkSession
 from GlobalSparkSession import global_spark_session
