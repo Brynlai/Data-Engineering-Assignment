@@ -64,6 +64,7 @@ from UtilsRedis import Redis_Utilities
 import redis
 word_to_search = "negara"
 redis_utils = Redis_Utilities()
+
 sentiment_data = redis_utils.get_sentiment(word_to_search)
 
 synonyms = get_synonyms(driver, word_to_search)
@@ -73,3 +74,4 @@ sentiment = get_word_sentiment(driver, word_to_search)
 print(f"Synonyms for '{word_to_search}': {', '.join(synonyms)}")
 print(f"Antonyms for '{word_to_search}': {', '.join(antonyms)}")
 print(f"Sentiment for '{word_to_search}':", sentiment_data)
+
