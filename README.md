@@ -13,12 +13,16 @@ This project involves processing and analyzing scraped data using PySpark, Redis
 1. Start Hadoop and Spark services:
    ```bash
    start-dfs.sh
+   ```
+   ```bash
    start-yarn.sh
    ```
 2. Start Kafka and Zookeeper:
    > Note: Wait for about 30 seconds before performing the next step.
    ```bash
    zookeeper-server-start.sh $KAFKA_HOME/config/zookeeper.properties &
+   ```
+   ```bash
    kafka-server-start.sh $KAFKA_HOME/config/server.properties &
    ```
     
