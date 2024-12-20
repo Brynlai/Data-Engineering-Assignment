@@ -56,6 +56,10 @@ class Redis_Update_Count:
         redis_key = f"sentiment:{word}"
         self.redis_client.hset(redis_key, mapping={"sentiment": sentiment})
 
+    def get_sentiment(self, word):
+        redis_key = f"sentiment:{word}"
+        return self.redis_client.hgetall(redis_key)
+
     def close(self):
         """
         Close the Redis connection.
