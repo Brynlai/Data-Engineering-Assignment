@@ -1,77 +1,62 @@
 """
-Author: Lai ZhonPoa
+Authors: Lai ZhonPoa, Alia
 """
 
 from neo4j import GraphDatabase
 import redis
 
-def setup_neo4j_driver(uri, user, password):
-    """
-    Initialize and verify a Neo4j driver connection.
+class DataBaseHandler:
+    def __init__(self, neo4j_uri, neo4j_user, neo4j_password, redis_client):
+        self.neo4j_driver = self._setup_neo4j_driver(neo4j_uri, neo4j_user, neo4j_password)
+        self.redis_client = redis_client
 
-    Args:
-        uri (str): The URI of the Neo4j database.
-        user (str): The username for authentication.
-        password (str): The password for authentication.
+    def _setup_neo4j_driver(self, uri, user, password):
+        """
+        Initialize and verify a Neo4j driver connection.
+        """
+        driver = GraphDatabase.driver(uri, auth=(user, password))
+        driver.verify_connectivity()
+        return driver
 
-    Returns:
-        neo4j.Driver: The Neo4j driver instance.
-    """
-    driver = GraphDatabase.driver(uri, auth=(user, password))
-    driver.verify_connectivity()
-    return driver
+    def insert_word_data(self, word, definition, tatabahasa, synonym, antonym):
+        """
+        Insert word data into Neo4j with relationships.
+        """
+        with self.neo4j_driver.session() as session:
+            session.write_transaction(self._insert_into_neo4j, word, definition, tatabahasa, synonym, antonym)
 
-def insert_into_neo4j(tx, word, definition, tatabahasa, synonym, antonym):
-    """
-    Insert word data into Neo4j with relationships.
-
-    Args:
-        tx (neo4j.Transaction): The transaction object.
-        word (str): The word to insert.
-        definition (str): The definition of the word.
-        tatabahasa (str): The grammatical category of the word.
-        synonym (str): A synonym of the word.
-        antonym (str): An antonym of the word.
-    """
-    tx.run(
-        "MERGE (w:Word {word: $word}) "
-        "SET w.definition = $definition, w.tatabahasa = $tatabahasa",
-        word=word, definition=definition, tatabahasa=tatabahasa
-    )
-
-    # Create synonym relationship
-    if synonym != "tidak diketahui" and synonym != word:
+    @staticmethod
+    def _insert_into_neo4j(tx, word, definition, tatabahasa, synonym, antonym):
         tx.run(
-            "MERGE (s:Word {word: $synonym}) "
-            "SET s.definition = $definition, s.tatabahasa = $tatabahasa "  # Ensure synonym node has properties
-            "WITH s "
-            "MATCH (w:Word {word: $word}) "
-            "MERGE (w)-[:SYNONYM]->(s)",
-            word=word, synonym=synonym, definition=definition, tatabahasa=tatabahasa
+            "MERGE (w:Word {word: $word}) "
+            "SET w.definition = $definition, w.tatabahasa = $tatabahasa",
+            word=word, definition=definition, tatabahasa=tatabahasa
         )
 
-    # Create antonym relationship
-    if antonym != "tidak diketahui" and antonym != word:
-        tx.run(
-            "MERGE (a:Word {word: $antonym}) "
-            "SET a.definition = $definition, a.tatabahasa = $tatabahasa " # Ensure antonym node has properties
-            "WITH a "
-            "MATCH (w:Word {word: $word}) "
-            "MERGE (w)-[:ANTONYM]->(a)",
-            word=word, antonym=antonym, definition=definition, tatabahasa=tatabahasa
-        )
+        if synonym != "tidak diketahui" and synonym != word:
+            tx.run(
+                "MERGE (s:Word {word: $synonym}) "
+                "SET s.definition = $definition, s.tatabahasa = $tatabahasa "
+                "WITH s "
+                "MATCH (w:Word {word: $word}) "
+                "MERGE (w)-[:SYNONYM]->(s)",
+                word=word, synonym=synonym, definition=definition, tatabahasa=tatabahasa
+            )
 
-def populate_database(driver, redis_util, data):
-    """
-    Insert data into Neo4j and Redis.
+        if antonym != "tidak diketahui" and antonym != word:
+            tx.run(
+                "MERGE (a:Word {word: $antonym}) "
+                "SET a.definition = $definition, a.tatabahasa = $tatabahasa "
+                "WITH a "
+                "MATCH (w:Word {word: $word}) "
+                "MERGE (w)-[:ANTONYM]->(a)",
+                word=word, antonym=antonym, definition=definition, tatabahasa=tatabahasa
+            )
 
-    Args:
-        driver (neo4j.Driver): The Neo4j driver instance.
-        redis_client (redis.StrictRedis): The Redis client instance.
-        data (list of dict): The data to insert, where each dictionary represents a row.
-    """
-    with driver.session() as session:
-        print("Populating Neo4J")
+    def populate_database(self, data):
+        """
+        Insert data into Neo4j and Redis.
+        """
         for row in data:
             print(f"Populating: {row}")
             word = row['word'].strip('"')
@@ -81,89 +66,52 @@ def populate_database(driver, redis_util, data):
             tatabahasa = row['tatabahasa'].strip('"')
             
             try:
-              sentiment = float(row['sentiment'].strip('"'))
+                sentiment = float(row['sentiment'].strip('"'))
             except ValueError:
-                print(f"Skipping row with invalid sentiment data for word: {word}, sentiment {sentiment}")
+                print(f"Skipping row with invalid sentiment data for word: {word}")
                 continue
+            self.insert_word_data(word, definition, tatabahasa, synonym, antonym)
 
-            # Insert into Neo4j
-            session.write_transaction(insert_into_neo4j, word, definition, tatabahasa, synonym, antonym)
-
-            # Store and Update in Redis
             """
             Author: Alia Tasnim Binti Baco
             """
-            redis_util.store_sentiment(word, sentiment)
-            redis_util.update_tatabahasa_count(tatabahasa)
-            redis_util.update_sentiment_count(sentiment)
+            self.redis_client.store_sentiment(word, sentiment)
+            self.redis_client.update_tatabahasa_count(tatabahasa)
+            self.redis_client.update_sentiment_count(sentiment)
 
-def count_unique_entries(tx):
-    """
-    Count the total number of unique entries (words, phrases) in the lexicon.
+    def get_total_unique_entries(self):
+        """
+        Get the total number of unique entries (words, phrases) in the lexicon.
+        """
+        with self.neo4j_driver.session() as session:
+            result = session.read_transaction(self._count_unique_entries)
+            return result
 
-    Args:
-        tx (neo4j.Transaction): The transaction object.
+    @staticmethod
+    def _count_unique_entries(tx):
+        result = tx.run("MATCH (w:Word) RETURN count(DISTINCT w.word) AS unique_entries")
+        return result.single()["unique_entries"]
 
-    Returns:
-        int: The total number of unique entries.
-    """
-    result = tx.run("MATCH (w:Word) RETURN count(DISTINCT w.word) AS unique_entries")
-    return result.single()["unique_entries"]
-    
+    def get_synonyms(self, word):
+        """
+        Retrieve synonyms for a given word.
+        """
+        query = """
+        MATCH (w:Word {word: $word})-[:SYNONYM]->(synonym:Word)
+        RETURN synonym.word AS synonym
+        """
+        with self.neo4j_driver.session() as session:
+            result = session.run(query, word=word)
+            return [record["synonym"] for record in result]
 
-def get_total_unique_entries(driver):
-    """
-    Get the total number of unique entries (words, phrases) in the lexicon.
-
-    Args:
-        driver (neo4j.Driver): The Neo4j driver instance.
-
-    Returns:
-        int: The total number of unique entries.
-    """
-    with driver.session() as session:
-        return session.read_transaction(count_unique_entries)
-
-
-
-
-def get_synonyms(driver, word):
-    """
-    Retrieve synonyms for a given word.
-
-    Args:
-        driver (neo4j.Driver): The Neo4j driver instance.
-        word (str): The word to search for.
-
-    Returns:
-        list: A list of synonyms.
-    """
-    query = """
-    MATCH (w:Word {word: $word})-[:SYNONYM]->(synonym:Word)
-    RETURN synonym.word AS synonym
-    """
-    with driver.session() as session:
-        result = session.run(query, word=word)
-        print(result)
-        return [record["synonym"] for record in result]
-
-def get_antonyms(driver, word):
-    """
-    Retrieve antonyms for a given word.
-
-    Args:
-        driver (neo4j.Driver): The Neo4j driver instance.
-        word (str): The word to search for.
-
-    Returns:
-        list: A list of antonyms.
-    """
-    query = """
-    MATCH (w:Word {word: $word})-[:ANTONYM]->(antonym:Word)
-    RETURN antonym.word AS antonym
-    """
-    with driver.session() as session:
-        result = session.run(query, word=word)
-        print(result)
-        return [record["antonym"] for record in result]
-
+    def get_antonyms(self, word):
+        """
+        Retrieve antonyms for a given word.
+        """
+        query = """
+        MATCH (w:Word {word: $word})-[:ANTONYM]->(antonym:Word)
+        RETURN antonym.word AS antonym
+        """
+        with self.neo4j_driver.session() as session:
+            result = session.run(query, word=word)
+            return [record["antonym"] for record in result]

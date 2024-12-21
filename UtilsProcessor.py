@@ -7,7 +7,7 @@ from pyspark.sql.window import Window
 from typing import List
 
 # Initialize SparkSession
-from GlobalSparkSession import global_spark_session
+from GlobalSparkSession import GlobalSparkSession
 
 import redis
 import google.generativeai as genai
@@ -20,14 +20,11 @@ class ScrapedDataProcessor:
         """
         Initializes SparkSession and Redis client.
         """
-        self.spark = global_spark_session()
+        self.spark = GlobalSparkSession.get_instance()
 
         self.redis_client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
 
     def setup_udf(self, scrape_data_udf):
-        """
-        Author: LIM ZHAO QING 
-        """
         """
         Sets up a user-defined function (UDF) for scraping data.
 
@@ -54,9 +51,6 @@ class ScrapedDataProcessor:
 
     def process_articles(self, aid_values):
         """
-        Author: Lai ZhonPoa
-        """
-        """
         Processes articles based on provided AID values.
 
         Args:
@@ -74,9 +68,6 @@ class ScrapedDataProcessor:
         return article_df, comments_df
 
     def save_dataframes(self, article_df, comments_df):
-        """
-        Author: XAVIER NGOW KAR YUEN
-        """
         """
         Saves article and comments DataFrames to CSV files.
 
@@ -97,9 +88,6 @@ class ScrapedDataProcessor:
             .csv("assignData/comments_data_csv_test")
 
     def process_words(self, article_csv_path, comments_csv_path):
-        """
-        Author: Lim Zhao Qing, Lai ZhonPoa
-        """
         """
         Processes words from article and comment CSV files.
 
@@ -127,9 +115,6 @@ class ScrapedDataProcessor:
 
     def save_cleaned_words(self, combined_words_df, process_words_func):
         """
-        Author: Xavier Ngow Kar Yuen
-        """
-        """
         Saves cleaned words to a CSV file.
 
         Args:
@@ -155,14 +140,11 @@ class WordDetailsProcessor:
         Args:
             gemini_api: Gemini API key.
         """
-        self.spark = global_spark_session()
+        self.spark = GlobalSparkSession.get_instance()
 
         self.gemini_api = gemini_api
 
     def read_clean_words(self, path):
-        """
-        Author: Xavier Ngow Kar Yuen
-        """
         """
         Reads cleaned words from a CSV file.
 
@@ -176,9 +158,6 @@ class WordDetailsProcessor:
 
     def add_row_number(self, df):
         """
-        Author: Xavier Ngow Kar Yuen
-        """
-        """
         Adds a row number column to the DataFrame.
 
         Args:
@@ -191,9 +170,6 @@ class WordDetailsProcessor:
         return df.withColumn("row_number", monotonically_increasing_id())
 
     def batch_process(self, df, batch_size, get_word_details_func):
-        """
-        Author: Lai ZhonPoa
-        """
         """
         Processes word details in batches using Gemini API.
 
@@ -223,9 +199,6 @@ class WordDetailsProcessor:
 
     def parse_and_save(self, all_csv_data, output_path):
         """
-        Author: Lai ZhonPoa, Xavier Ngow Kar Yuen
-        """
-        """
         Parses CSV data and saves it to a CSV file.
 
         Args:
@@ -249,9 +222,6 @@ class WordDetailsProcessor:
                              .csv(output_path)
 
     def filter_usable_words(self, path, output_path):
-        """
-        Author: Lai ZhonPoa
-        """
         """
         Filters usable words from word details CSV.
 
