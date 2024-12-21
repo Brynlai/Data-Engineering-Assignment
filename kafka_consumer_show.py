@@ -1,6 +1,26 @@
 from pyspark.sql.functions import from_json, col, regexp_replace, split, explode
 from pyspark.sql.types import StructType, StructField, StringType
 from GlobalSparkSession import global_spark_session
+from kafka.admin import KafkaAdminClient, NewTopic
+from kafka.errors import TopicAlreadyExistsError
+from kafka import KafkaConsumer
+
+def check_and_create_kafka_topic(topic_name, bootstrap_servers):
+    admin_client = KafkaAdminClient(bootstrap_servers=bootstrap_servers)
+    try:
+        # Check if the topic exists
+        topic_metadata = admin_client.list_topics()
+        if topic_name not in topic_metadata:
+            # Create the topic if it doesn't exist
+            topic_list = [NewTopic(name=topic_name, num_partitions=1, replication_factor=1)]
+            admin_client.create_topics(new_topics=topic_list, validate_only=False)
+            print(f"Topic '{topic_name}' created successfully.")
+        else:
+            print(f"Topic '{topic_name}' already exists.")
+    except Exception as e:
+        print(f"Error checking or creating topic '{topic_name}': {e}")
+    finally:
+        admin_client.close()
 
 def kafka_consumer():
     """
@@ -10,6 +30,12 @@ def kafka_consumer():
     cleans the content, splits it into words, filters out empty words, and saves the results
     to a CSV file. It also prints the filtered words to the console.
     """
+    topic_name = "wiki_topic"
+    bootstrap_servers = "localhost:9092"
+
+    # Check and create Kafka topic if necessary
+    check_and_create_kafka_topic(topic_name, bootstrap_servers)
+
     # Define the schema for the JSON messages
     schema = StructType([
         StructField("Title", StringType(), True),
@@ -24,8 +50,8 @@ def kafka_consumer():
     df = spark \
         .readStream \
         .format("kafka") \
-        .option("kafka.bootstrap.servers", "localhost:9092") \
-        .option("subscribe", "wiki_topic") \
+        .option("kafka.bootstrap.servers", bootstrap_servers) \
+        .option("subscribe", topic_name) \
         .load()
 
     # Convert the value from binary to string
@@ -64,7 +90,6 @@ def kafka_consumer():
     # Wait for both queries to terminate
     query.awaitTermination()
     query_to_csv.awaitTermination()
-
 
 if __name__ == "__main__":
     kafka_consumer()
