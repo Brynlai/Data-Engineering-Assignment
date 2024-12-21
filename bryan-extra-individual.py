@@ -2,7 +2,8 @@
 from neo4j import GraphDatabase
 import matplotlib.pyplot as plt
 import networkx as nx
-from UtilsNeo4J import setup_neo4j_driver, get_total_unique_entries, get_synonyms, get_antonyms, get_word_sentiment
+from UtilsNeo4J import setup_neo4j_driver, get_total_unique_entries, get_synonyms, get_antonyms
+
 
 driver = setup_neo4j_driver(
     uri="neo4j+s://abc.databases.neo4j.io",
@@ -62,7 +63,7 @@ for theme_id, words in themes.items():
 
 from UtilsRedis import Redis_Utilities
 import redis
-word_to_search = "negara"
+word_to_search = "gembira"
 redis_utils = Redis_Utilities()
 
 sentiment_data = redis_utils.get_sentiment(word_to_search)
@@ -73,4 +74,3 @@ antonyms = get_antonyms(driver, word_to_search)
 print(f"Synonyms for '{word_to_search}': {', '.join(synonyms)}")
 print(f"Antonyms for '{word_to_search}': {', '.join(antonyms)}")
 print(f"Sentiment for '{word_to_search}':", sentiment_data)
-
