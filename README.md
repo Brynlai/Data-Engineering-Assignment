@@ -1,4 +1,4 @@
-# Data Engineering Assignment
+# Data Engineering Assignment RDSY2S2
 
 ## Description
 This project involves processing and analyzing scraped data using PySpark, Redis, and Neo4j. The aim is to store, process, and analyze text data efficiently.
