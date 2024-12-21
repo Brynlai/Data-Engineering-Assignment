@@ -1,3 +1,6 @@
+"""
+Authors: Lim Zhao Qing, Xavier Ngow Kar Yuen
+"""
 from pyspark.sql.functions import from_json, col, regexp_replace, split, explode
 from pyspark.sql.types import StructType, StructField, StringType
 from GlobalSparkSession import GlobalSparkSession

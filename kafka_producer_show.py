@@ -1,3 +1,6 @@
+"""
+Author: Xavier Ngow Kar Yuen
+"""
 import json
 from kafka import KafkaProducer
 from UtilsWikipedia import fetch_search_results, fetch_page_content, extract_page_info
