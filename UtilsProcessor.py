@@ -1,5 +1,5 @@
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, ArrayType, BooleanType
-from pyspark.sql.functions import udf, split, col, concat, regexp_replace, explode, row_number
+from pyspark.sql.functions import udf, split, col, concat, regexp_replace, explode, row_number, monotonically_increasing_id
 from pyspark.sql.window import Window
 from typing import List
 
@@ -163,8 +163,8 @@ class WordDetailsProcessor:
         Returns:
             DataFrame: DataFrame with row number column.
         """
-        window = Window.orderBy("Cleaned_Word")
-        return df.withColumn("row_number", row_number().over(window))
+        print("add_row_number running")
+        return df.withColumn("row_number", monotonically_increasing_id())
 
     def batch_process(self, df, batch_size, get_word_details_func):
         """
