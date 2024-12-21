@@ -8,12 +8,12 @@ import redis
 # Initialize SparkSession
 from GlobalSparkSession import global_spark_session
 spark = global_spark_session()
-
-
-
 # Initialize ScrapedDataProcessor
 scraped_data_processor = ScrapedDataProcessor()
 scraped_data_processor.setup_udf(scrape_data_udf)
+
+
+
 
 # === 1. Data Collection and preparation ===
 # === * cari.com.my and wikipedia api ===
@@ -48,7 +48,7 @@ scraped_data_processor.save_cleaned_words(combined_words_df, process_words)
 # === 3. Lexicon Enrichment ===
 # === * Definition, Antonym, Synonym, Tatabahasa, Sentiment ===
 # Initialize WordDetailsProcessor
-gemini_api = 'abc-4'  # Replace with your actual Gemini API key
+gemini_api = 'bac-4'  # Replace with your actual Gemini API key
 word_details_processor = WordDetailsProcessor(gemini_api)
 
 # Read and process clean words
