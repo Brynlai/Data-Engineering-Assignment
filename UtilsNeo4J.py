@@ -137,6 +137,7 @@ def get_synonyms(driver, word):
     """
     with driver.session() as session:
         result = session.run(query, word=word)
+        print(result)
         return [record["synonym"] for record in result]
 
 def get_antonyms(driver, word):
@@ -156,28 +157,6 @@ def get_antonyms(driver, word):
     """
     with driver.session() as session:
         result = session.run(query, word=word)
+        print(result)
         return [record["antonym"] for record in result]
 
-
-
-def get_word_sentiment(driver, word):
-    """
-    Retrieve the sentiment of a word from Neo4j.
-
-    Args:
-        driver (neo4j.Driver): The Neo4j driver instance.
-        word (str): The word to search for.
-
-    Returns:
-        float: The sentiment value of the word, or None if not found.
-    """
-    with driver.session() as session:
-        result = session.run(
-            "MATCH (w:Word {word: $word}) RETURN w.sentiment AS sentiment",
-            word=word
-        )
-        record = result.single()
-        if record:
-            return record["sentiment"]
-        else:
-            return None
