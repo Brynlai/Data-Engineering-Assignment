@@ -1,3 +1,7 @@
+"""
+Author: Alia Tasnim Binti Baco
+"""
+
 import redis
 
 class Redis_Utilities:

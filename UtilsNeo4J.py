@@ -1,3 +1,7 @@
+"""
+Author: Lai ZhonPoa
+"""
+
 from neo4j import GraphDatabase
 import redis
 
@@ -86,6 +90,9 @@ def populate_database(driver, redis_util, data):
             session.write_transaction(insert_into_neo4j, word, definition, tatabahasa, synonym, antonym)
 
             # Store and Update in Redis
+            """
+            Author: Alia Tasnim Binti Baco
+            """
             redis_util.store_sentiment(word, sentiment)
             redis_util.update_tatabahasa_count(tatabahasa)
             redis_util.update_sentiment_count(sentiment)

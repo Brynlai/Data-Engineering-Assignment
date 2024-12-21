@@ -1,3 +1,4 @@
+
 import requests
 
 def fetch_search_results() -> list:

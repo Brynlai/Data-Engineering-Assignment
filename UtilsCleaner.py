@@ -1,3 +1,7 @@
+"""
+Author: Alia Tasnim Binti Baco
+"""
+
 from pyspark.sql.functions import split, explode, udf, lower
 from pyspark.sql.types import StringType
 from UtilsRedis import Redis_Utilities

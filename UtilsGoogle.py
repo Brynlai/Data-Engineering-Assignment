@@ -1,3 +1,7 @@
+"""
+Author: Lai ZhonPoa, Alia Tasnim Binti Baco
+"""
+
 import google.generativeai as genai
 from typing import List
 
