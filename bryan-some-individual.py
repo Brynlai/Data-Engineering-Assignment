@@ -69,7 +69,6 @@ sentiment_data = redis_utils.get_sentiment(word_to_search)
 
 synonyms = get_synonyms(driver, word_to_search)
 antonyms = get_antonyms(driver, word_to_search)
-sentiment = get_word_sentiment(driver, word_to_search)
 
 print(f"Synonyms for '{word_to_search}': {', '.join(synonyms)}")
 print(f"Antonyms for '{word_to_search}': {', '.join(antonyms)}")
