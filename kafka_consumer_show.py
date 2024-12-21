@@ -6,6 +6,12 @@ from kafka.errors import TopicAlreadyExistsError
 from kafka import KafkaConsumer
 
 def check_and_create_kafka_topic(topic_name, bootstrap_servers):
+    """
+    Checks if a Kafka topic exists, and creates it if it doesn't.
+
+    This function uses the KafkaAdminClient to check if the specified Kafka topic exists.
+    If the topic does not exist, it creates the topic with the given name.
+    """
     admin_client = KafkaAdminClient(bootstrap_servers=bootstrap_servers)
     try:
         # Check if the topic exists
