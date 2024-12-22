@@ -5,6 +5,7 @@ import google.generativeai as genai
 from typing import List
 
 class WordDetailsGenerator:
+    @staticmethod
     def get_word_details(words: List[str], gemini_api_key: str) -> str:
         """
         Generate word details in CSV format for the given list of words.
@@ -46,26 +47,30 @@ class WordDetailsGenerator:
     
         chat_session = model.start_chat()
         
-        # Improved prompt
+        # Improved prompt 360 tokens
         prompt = f"""
-        You are an accurate and consistent labeling machine specializing in Bahasa Malaysia and Mixed Malay. Generate a CSV file in text format with the following structure:
+        You are an expert in Bahasa Malaysia and Mixed Malay, tasked with creating a structured lexicon. Generate a CSV file in text format with the following structure:
         "word","definition","antonym","synonym","tatabahasa","sentiment"
         
         Rules:
-        1. Provide a clear and concise definition of the word in Malay, without repeating the word itself.
-        2. Antonyms and synonyms must be meaningful and relevant; use "tidak diketahui" if unavailable.
-        3. Tatabahasa must be concise and accurate, using standard Malay grammar terms like "kata nama".
-        4. Sentiment must be a numerical string between "-1.0" and "1.0", where "0.0" represents neutral sentiment.
-        5. Enclose all values in double quotes.
-        6. Each row must have unique and distinct values across columns.
+        1. Provide a clear and concise definition in Malay, without repeating the word itself.
+        2. Antonyms and synonyms:
+           - Antonyms must contrast conceptually with the word's meaning and cannot have definitions identical to the word.
+           - Synonyms must share a similar meaning and context.
+           - Use "tidak diketahui" if no meaningful antonym or synonym is available or if the word lacks contextual alternatives.
+        3. Tatabahasa (part of speech) must be concise and accurate, using standard Malay grammar terms like "kata nama."
+        4. Sentiment must be a numerical string between "-1.0" and "1.0," where "0.0" represents neutral sentiment.
+        5. Enclose all values in double quotes, and ensure each row has unique and distinct values across columns.
+        6. For non-conventional words (e.g., numbers or mixed-language terms), provide "tidak diketahui" for antonym and synonym.
         
         Example:
         "word","definition","antonym","synonym","tatabahasa","sentiment"
         "kami","kata ganti nama diri jamak, merujuk kepada penutur","mereka","kita","kata ganti","0.0"
         "gembira","rasa senang hati atau bahagia","sedih","bahagia","kata sifat","0.9"
         
-        Based on the provided words, generate the CSV file without skipping any words: {', '.join(words)}
+        Based on the provided words, generate the CSV file content without skipping any words: {', '.join(words)}
         """
+
 
     
         
@@ -82,8 +87,8 @@ class WordDetailsGenerator:
             .replace('"word","definition","antonym","synonym","tatabahasa","sentiment"\n', '')
         )
         
-        print("get_word_details completed. Returned:")
+        print("get_word_details completed. \n<Start>")
         print(text_response)
-        print("Ended get_word_details")
+        print("<Stop> Ended get_word_details")
         
         return text_response

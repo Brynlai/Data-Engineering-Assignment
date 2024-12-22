@@ -58,7 +58,7 @@ class DataBaseHandler:
         Insert data into Neo4j and Redis.
         """
         for row in data:
-            print(f"Populating: {row}")
+            #print(f"Populating: {row}")
             word = row['word'].strip('"')
             definition = row['definition'].strip('"')
             antonym = row['antonym'].strip('"')

@@ -3,7 +3,7 @@ Author: Xavier Ngow Kar Yuen
 """
 import json
 from kafka import KafkaProducer
-from UtilsWikipedia import fetch_search_results, fetch_page_content, extract_page_info
+from UtilsWikipedia import WikipediaUtils
 
 class WikipediaKafkaProducer:
     def kafka_producer():
@@ -20,12 +20,12 @@ class WikipediaKafkaProducer:
         )
     
         # Fetch search results from Wikipedia API
-        titles = fetch_search_results()
+        titles = WikipediaUtils.fetch_search_results()
     
         # Fetch content for each title and produce to Kafka
         for title in titles:
-            page_content = fetch_page_content(title)
-            page_info_list = extract_page_info(page_content)
+            page_content = WikipediaUtils.fetch_page_content(title)
+            page_info_list = WikipediaUtils.extract_page_info(page_content)
             for page_info in page_info_list:
                 print(f"Producing message: {page_info}")
                 producer.send('wiki_topic', page_info)
