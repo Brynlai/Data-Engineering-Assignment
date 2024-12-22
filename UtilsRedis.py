@@ -112,7 +112,7 @@ class Redis_Utilities:
         redis_key = f"sentiment:{word}"
         return self.redis_client.hgetall(redis_key)
         
-    def get_word_frequencies(self, word):
+    def get_all_word_frequencies(self):
         """
         Retrieve all word frequencies from Redis.
 
