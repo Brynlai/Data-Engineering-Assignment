@@ -65,11 +65,15 @@ This project involves processing and analyzing scraped data using PySpark, Redis
    > Note: Wait for about 30 seconds before performing the next step.
    ```bash
    kafka-server-stop.sh
+   ```
+   ```bash
    zookeeper-server-stop.sh
    ```
 3. Stop Hadoop and Spark services:
    ```bash
    stop-yarn.sh
+   ```
+   ```bash
    stop-dfs.sh
    ```
 
