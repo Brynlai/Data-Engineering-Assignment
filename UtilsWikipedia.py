@@ -21,7 +21,7 @@ def fetch_search_results() -> list:
         'list': 'search',
         'utf8': 1,
         'srsearch': 'bahasa',  # Search term
-        'srlimit': 40          # Limit the number of search results
+        'srlimit': 100          # Limit the number of search results
     })
     response.raise_for_status()  # Raise an exception for bad status codes
     data = response.json()
