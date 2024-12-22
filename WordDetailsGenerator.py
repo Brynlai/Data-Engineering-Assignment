@@ -40,28 +40,33 @@ class WordDetailsGenerator:
     
         # Select llm model and config
         model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash-8b",
+            model_name="gemini-1.5-flash",
             generation_config=generation_config,
         )
     
         chat_session = model.start_chat()
         
         # Improved prompt
-        prompt = f"""You are a very generalized consistent Labeling Machine specializing in Bahasa Malaysia and Mixed Malay. Generate in text a CSV file with the structure: "word,definition,antonym,synonym,tatabahasa,sentiment". 
+        prompt = f"""
+        You are an accurate and consistent labeling machine specializing in Bahasa Malaysia and Mixed Malay. Generate a CSV file in text format with the following structure:
+        "word","definition","antonym","synonym","tatabahasa","sentiment"
+        
         Rules:
-        1. Definition must explain the word in Malay and not repeat the word.
-        2. Antonyms and synonyms must be meaningful; use "tidak diketahui" if unavailable.
-        3. Tatabahasa must be the most concise Malay words like "kata nama".
-        4. Sentiment is a string between "-1.0" and "1.0", neutral being "0.0".
+        1. Provide a clear and concise definition of the word in Malay, without repeating the word itself.
+        2. Antonyms and synonyms must be meaningful and relevant; use "tidak diketahui" if unavailable.
+        3. Tatabahasa must be concise and accurate, using standard Malay grammar terms like "kata nama".
+        4. Sentiment must be a numerical string between "-1.0" and "1.0", where "0.0" represents neutral sentiment.
         5. Enclose all values in double quotes.
-        6. In each row, each column of that row must not be the same.
+        6. Each row must have unique and distinct values across columns.
+        
         Example:
         "word","definition","antonym","synonym","tatabahasa","sentiment"
         "kami","kata ganti nama diri jamak, merujuk kepada penutur","mereka","kita","kata ganti","0.0"
-        "gawgwah","tidak diketahui","tidak diketahui","tidak diketahui","tidak diketahui","0.0"
+        "gembira","rasa senang hati atau bahagia","sedih","bahagia","kata sifat","0.9"
         
-        Based on these Words, DO NOT SKIP ANY WORDS and generate the csv file: {', '.join(words)}
+        Based on the provided words, generate the CSV file without skipping any words: {', '.join(words)}
         """
+
     
         
         # Sending the prompt to the chat model
