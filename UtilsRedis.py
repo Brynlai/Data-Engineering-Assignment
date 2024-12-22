@@ -1,3 +1,7 @@
+"""
+Author: Alia Tasnim Binti Baco
+"""
+
 import redis
 
 class Redis_Utilities:
@@ -6,7 +10,7 @@ class Redis_Utilities:
         "kata singkatan", "kata nama khas", "kata sendi nama", "kata ganti nama diri", "kata nama jamak",
         "kata ganti nama", "kata kerja pasif", "kata seru", "kata sifat", "kata ganti nama diri tunggal",
         "singkatan", "kata ganti", "kata nama waktu", "kata tanya", "kata hubung", "kata tunjuk",
-        "nombor", "kata keternagan masa", "kata nombor"
+        "kata keterangan masa"
     ]
 
     def __init__(self, host="localhost", port=6379, db=0):
@@ -108,7 +112,7 @@ class Redis_Utilities:
         redis_key = f"sentiment:{word}"
         return self.redis_client.hgetall(redis_key)
         
-    def get_word_frequencies(self, word):
+    def get_all_word_frequencies(self):
         """
         Retrieve all word frequencies from Redis.
 
