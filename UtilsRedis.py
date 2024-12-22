@@ -10,7 +10,7 @@ class Redis_Utilities:
         "kata singkatan", "kata nama khas", "kata sendi nama", "kata ganti nama diri", "kata nama jamak",
         "kata ganti nama", "kata kerja pasif", "kata seru", "kata sifat", "kata ganti nama diri tunggal",
         "singkatan", "kata ganti", "kata nama waktu", "kata tanya", "kata hubung", "kata tunjuk",
-        "nombor", "kata keterangan masa", "kata nombor"
+        "kata keterangan masa"
     ]
 
     def __init__(self, host="localhost", port=6379, db=0):
