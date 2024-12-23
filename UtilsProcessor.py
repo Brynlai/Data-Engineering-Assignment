@@ -1,10 +1,13 @@
+"""
+Authors: Lai ZhonPoa, Lim Zhao Qing, Xavier Ngow Kar Yuen
+"""
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, ArrayType, BooleanType
 from pyspark.sql.functions import udf, split, col, concat, regexp_replace, explode, row_number, monotonically_increasing_id
 from pyspark.sql.window import Window
 from typing import List
 
 # Initialize SparkSession
-from GlobalSparkSession import global_spark_session
+from GlobalSparkSession import GlobalSparkSession
 
 import redis
 import google.generativeai as genai
@@ -17,7 +20,7 @@ class ScrapedDataProcessor:
         """
         Initializes SparkSession and Redis client.
         """
-        self.spark = global_spark_session()
+        self.spark = GlobalSparkSession.get_instance()
 
         self.redis_client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
 
@@ -137,7 +140,7 @@ class WordDetailsProcessor:
         Args:
             gemini_api: Gemini API key.
         """
-        self.spark = global_spark_session()
+        self.spark = GlobalSparkSession.get_instance()
 
         self.gemini_api = gemini_api
 
